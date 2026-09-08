@@ -176,6 +176,31 @@ variant, unit *and* unit price at checkout, and the delivery address is copied
 onto the order too. Vegetable prices move daily — joining to the live catalogue
 would silently re-price completed orders every time you update a price.
 
+### Is it safe that the anon key is public?
+
+Yes — but only because RLS is doing the work, so it is worth knowing what that
+key actually grants. It ships in the JavaScript bundle, so treat it as though
+it were printed on the homepage. Probed against a live project with nothing but
+that key and no session:
+
+| | |
+|---|---|
+| Catalogue, categories, variants, shop settings | **readable** — intended, this is the shop |
+| Orders, order items, status history | blocked |
+| Profiles, addresses | blocked |
+| Staff list, promo codes, redemptions | blocked |
+| Change a price, rename or hide a product | blocked |
+| Insert an order, category or promo directly | blocked (`42501`) |
+| Grant yourself admin, add yourself to staff | blocked (`42501`) |
+| Change the delivery fee, delete orders | blocked |
+
+The key identifies the *project*, not a user. It carries no privileges of its
+own — every one of those outcomes comes from a policy, which is why the
+migrations matter more than the key does.
+
+The key that must never be exposed is Supabase's **`service_role`**, which
+bypasses RLS entirely. It is not used anywhere in this app.
+
 ### A note on roles and the phone column
 
 A profile's `phone` is **not writable by the client**. Roles are matched against
