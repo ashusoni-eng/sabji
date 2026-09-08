@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env files. All of these are loaded by Vite and end up baked into the bundle,
+# so none of them belong in git. .env.example is the committed template.
+.env
+.env.*
+!.env.example
