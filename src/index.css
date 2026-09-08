@@ -1,33 +1,168 @@
 @import "tailwindcss";
 
+/*
+ * Semantic tokens. Components use bg-surface / text-ink / border-line and never
+ * hard-code a colour, which is what stops dark mode from going half-finished:
+ * one variable flips and the whole app follows.
+ */
 @theme {
-  --color-primary: #2E7D32;
-  --color-accent: #FF6F00;
-  --color-golden: #F9A825;
-  --color-neutral: #F5F5F0;
-  --color-dark: #1B2A1B;
-  --font-headline: "Plus Jakarta Sans", sans-serif;
-  --font-body: "DM Sans", sans-serif;
-  --font-label: "DM Sans", sans-serif;
-  --radius-DEFAULT: 0.5rem;
-  --radius-lg: 1rem;
-  --radius-xl: 1.5rem;
-  --radius-full: 9999px;
+  --color-ground:     var(--c-ground);
+  --color-surface:    var(--c-surface);
+  --color-surface-2:  var(--c-surface-2);
+  --color-ink:        var(--c-ink);
+  --color-muted:      var(--c-muted);
+  --color-faint:      var(--c-faint);
+  --color-line:       var(--c-line);
+  --color-brand:      var(--c-brand);
+  --color-brand-ink:  var(--c-brand-ink);
+  --color-brand-soft: var(--c-brand-soft);
+  /* Text/icon colour for anything sitting ON a filled brand, accent or danger
+     surface. Light theme fills are dark so this is white; dark theme fills are
+     light tints, so it flips to near-black. */
+  --color-on-brand:   var(--c-on-brand);
+  --color-accent:     var(--c-accent);
+  --color-golden:     var(--c-golden);
+  --color-danger:     var(--c-danger);
+  --color-danger-soft:var(--c-danger-soft);
+
+  --font-headline: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --c-ground:      #F5F5F0;
+  --c-surface:     #FFFFFF;
+  --c-surface-2:   #FAFAF7;
+  --c-ink:         #1B2A1B;
+  --c-muted:       #57635A;
+  --c-faint:       #8B948C;
+  --c-line:        #E7E9E2;
+  --c-brand:       #2E7D32;
+  --c-brand-ink:   #1B5E20;
+  --c-brand-soft:  #E8F1E8;
+  --c-accent:      #FF6F00;
+  --c-golden:      #F9A825;
+  --c-danger:      #C62828;
+  --c-danger-soft: #FDECEA;
+  --c-on-brand:    #FFFFFF;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-ground:      #101310;
+    --c-surface:     #191D18;
+    --c-surface-2:   #22271F;
+    --c-ink:         #E9ECE4;
+    --c-muted:       #A3AC9F;
+    --c-faint:       #737C70;
+    --c-line:        #2C322A;
+    --c-brand:       #6FBF73;
+    --c-brand-ink:   #8FD293;
+    --c-brand-soft:  #1D2C21;
+    --c-accent:      #FF9642;
+    --c-golden:      #E3AC5C;
+    --c-danger:      #F09287;
+    --c-danger-soft: #2E1A17;
+    --c-on-brand:    #0C120D;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --c-ground:      #101310;
+  --c-surface:     #191D18;
+  --c-surface-2:   #22271F;
+  --c-ink:         #E9ECE4;
+  --c-muted:       #A3AC9F;
+  --c-faint:       #737C70;
+  --c-line:        #2C322A;
+  --c-brand:       #6FBF73;
+  --c-brand-ink:   #8FD293;
+  --c-brand-soft:  #1D2C21;
+  --c-accent:      #FF9642;
+  --c-golden:      #E3AC5C;
+  --c-danger:      #F09287;
+  --c-danger-soft: #2E1A17;
+  --c-on-brand:    #0C120D;
+  color-scheme: dark;
+}
+
+@layer base {
+  html { -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--c-ground);
+    color: var(--c-ink);
+    font-family: var(--font-body);
+    /* Stops iOS Safari zooming when a form field is focused. */
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+  }
+
+  /* Inputs below 16px make iOS zoom the viewport on focus. */
+  input, select, textarea { font-size: 16px; }
+
+  :focus-visible {
+    outline: 2px solid var(--c-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
 }
 
 @layer utilities {
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    user-select: none;
   }
-  .hide-scrollbar::-webkit-scrollbar {
-    display: none;
+  .icon-fill { font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+
+  .hide-scrollbar::-webkit-scrollbar { display: none; }
+  .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Real safe-area handling. The old `pb-safe` class did not exist in Tailwind
+     v4 and compiled to nothing, so the bottom nav sat under the home indicator. */
+  .pb-safe   { padding-bottom: env(safe-area-inset-bottom); }
+  .pt-safe   { padding-top: env(safe-area-inset-top); }
+  .h-nav     { height: calc(4rem + env(safe-area-inset-bottom)); }
+  .below-nav    { padding-bottom: calc(5rem + env(safe-area-inset-bottom)); }
+  .below-action { padding-bottom: calc(6.5rem + env(safe-area-inset-bottom)); }
+
+  /* Every interactive control clears the 44px minimum touch target, even when
+     its visible box is smaller. */
+  .tap { position: relative; min-width: 44px; min-height: 44px; }
+  .tap-sm::after {
+    content: ''; position: absolute; inset: 50% 50% 50% 50%;
+    width: 44px; height: 44px; transform: translate(-50%, -50%);
   }
-  .hide-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+
+  .animate-toast-in { animation: toast-in 180ms cubic-bezier(.2,.8,.2,1); }
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px) scale(.97); }
+    to   { opacity: 1; transform: none; }
   }
+
+  .animate-sheet-in { animation: sheet-in 220ms cubic-bezier(.2,.8,.2,1); }
+  @keyframes sheet-in {
+    from { transform: translateY(100%); }
+    to   { transform: none; }
+  }
+
+  .animate-fade-in { animation: fade-in 160ms ease-out; }
+  @keyframes fade-in { from { opacity: 0 } to { opacity: 1 } }
+
+  .shimmer {
+    background: linear-gradient(90deg, var(--c-surface-2) 25%, var(--c-line) 37%, var(--c-surface-2) 63%);
+    background-size: 400% 100%;
+    animation: shimmer 1.3s ease-in-out infinite;
+  }
+  @keyframes shimmer { from { background-position: 100% 0 } to { background-position: 0 0 } }
 }
 
-body {
-  min-height: max(884px, 100dvh);
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
 }

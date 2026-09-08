@@ -2,15 +2,33 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Sabji - Aaj sb fresh aaya hai</title>
+
+    <title>Sabji — Aaj sb fresh aaya hai</title>
+    <meta name="description" content="Fresh fruit and vegetables from your local shop, delivered the same day. Cash on delivery." />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+    <!-- Installed-app appearance -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#2E7D32" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)"  content="#101310" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Sabji" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Text faces are self-hosted (see src/main.jsx). Material Symbols stays on
+         Google Fonts because the icon_names parameter subsets it to just the 46
+         glyphs this app uses — a few KB, versus ~3.5 MB for the full font. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&icon_names=add,add_a_photo,add_location,add_photo_alternate,add_shopping_cart,admin_panel_settings,arrow_back,arrow_forward,block,bolt,call,category,check,check_circle,chevron_right,circle,close,cloud_off,delete,eco,edit,error,group,inbox,info,inventory_2,local_activity,local_shipping,location_off,location_on,lock,login,logout,mail,payments,person,photo_camera,receipt_long,refresh,remove,schedule,search,settings,shopping_basket,shopping_cart,storefront,toggle_off,toggle_on,tune,visibility,visibility_off,wifi_off&display=block" />
+    <noscript><link rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0..1,0&icon_names=add,add_a_photo,add_location,add_photo_alternate,add_shopping_cart,admin_panel_settings,arrow_back,arrow_forward,block,bolt,call,category,check,check_circle,chevron_right,circle,close,cloud_off,delete,eco,edit,error,group,inbox,info,inventory_2,local_activity,local_shipping,location_off,location_on,lock,login,logout,mail,payments,person,photo_camera,receipt_long,refresh,remove,schedule,search,settings,shopping_basket,shopping_cart,storefront,toggle_off,toggle_on,tune,visibility,visibility_off,wifi_off&display=block" /></noscript>
   </head>
-  <body class="bg-neutral text-dark font-body pb-24">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
