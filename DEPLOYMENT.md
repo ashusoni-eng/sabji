@@ -1,11 +1,11 @@
 # Deploying Sabji
 
-Written for **srv1634371.hstgr.cloud** (Ubuntu 24.04, Apache 2, certbot 5.8.0),
-serving **https://sabji.aeologic.in**.
+Two routes are covered: **Vercel** (simpler, and what you are using) and the
+**Apache server** srv1634371.hstgr.cloud, should you ever want it there instead.
 
-> **Status: not yet executed.** Every command here is written against that
-> server's actual configuration, which was surveyed on 7 Sep 2026 — but none of
-> it has been run. Work through it once with a person watching.
+> **Status: not executed.** The Apache commands are written against that
+> server's real configuration, surveyed on 7 Sep 2026, but none of them have
+> been run. Work through them once with a person watching.
 
 ---
 
@@ -75,9 +75,68 @@ re-included, so no env file can be committed by accident.
 
 ---
 
-## Before you start
+## Deploying on Vercel
 
-Two prerequisites that are not optional and cannot be done from the server.
+Simpler than the server route, and it sidesteps the Node problem entirely —
+Vercel builds on Node 22 by default, which Vite 8 is happy with.
+
+`vercel.json` in the repo already sets the build command, output directory, the
+SPA rewrite and cache headers. Two of those matter more than they look:
+
+- **The rewrite.** React Router owns the URLs. Vercel serves a real file when
+  one exists, so `/assets/*` and `/sw.js` are untouched; everything else falls
+  through to `index.html`. Without it, a reload on `/admin` returns 404.
+- **`sw.js` and `index.html` must not be cached.** They are what tells a phone a
+  new build exists. Cache them and users stay on an old version after every deploy.
+
+### Environment variables
+
+Add these in **Project → Settings → Environment Variables**, for Production
+(and Preview, if you want preview deploys to work):
+
+| Name | Value |
+|---|---|
+| `VITE_STORE_NAME` | `Suvidha General Store` |
+| `VITE_SUPABASE_URL` | your project URL |
+| `VITE_SUPABASE_ANON_KEY` | your anon key |
+| `VITE_DEV_STATIC_OTP` | `123456` |
+
+**Vercel will warn: _"Remove the public framework prefix to keep this value
+private."_ Do not act on the first half of that.**
+
+Vite only exposes variables beginning with `VITE_` to browser code — that is the
+entire mechanism. Drop the prefix and `import.meta.env.VITE_SUPABASE_URL`
+becomes `undefined` and the app renders its setup screen instead of the shop.
+There is no server side here to hold a private value; this is a static bundle,
+so everything it needs must reach the browser.
+
+The second half of the warning is right: these are **configuration, not
+secrets**, so classify them as such. The Supabase URL is just your project's
+address, and the anon key is public by design — it identifies the project, not a
+user, and row-level security is what protects the data.
+
+The key that must **never** carry a `VITE_` prefix is Supabase's
+**`service_role`** key. That one bypasses RLS completely.
+
+Changing a variable does not affect the running site until you **redeploy** —
+values are inlined at build time.
+
+### After the first deploy
+
+In Supabase, **Authentication → URL Configuration**, set the Site URL to your
+Vercel domain and add `https://<your-domain>/**` to the redirect URLs. Sign-in
+misbehaves in confusing ways if you skip this.
+
+To use `sabji.aeologic.in` instead of the `.vercel.app` domain, add it under
+**Project → Settings → Domains** and point a CNAME at Vercel — *not* the A
+record to `187.127.159.226` described below, which is for the Apache route.
+
+---
+
+## Deploying to the Apache server instead
+
+Only needed if you are **not** using Vercel. Two prerequisites that cannot be
+done from the server itself.
 
 ### 1. DNS — `sabji.aeologic.in` does not exist yet
 
