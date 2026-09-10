@@ -7,7 +7,7 @@ import { useToast } from '../context/contexts'
 import { readableError } from '../lib/supabase'
 import { Screen } from '../components/layout/AppShell'
 import { Button, Skeleton, ErrorState, StatusPill, PaymentBadge, Icon, ProductImage } from '../components/ui'
-import { rupees, formatDate, STATUS_LABEL, STATUS_FLOW } from '../lib/format'
+import { rupees, formatDate, addressLines, STATUS_LABEL, STATUS_FLOW } from '../lib/format'
 
 export default function OrderDetail() {
   const { id } = useParams()
@@ -121,9 +121,9 @@ export default function OrderDetail() {
 
       <Card title="Delivered to">
         <p className="font-semibold text-sm">{o.ship_full_name} · {o.ship_phone}</p>
-        <p className="text-sm text-muted leading-snug">
-          {[o.ship_line1, o.ship_line2, o.ship_landmark].filter(Boolean).join(', ')} — {o.ship_pincode}
-        </p>
+        <div className="text-sm text-muted leading-snug">
+          {addressLines(o).map((l, i) => <p key={i}>{l}</p>)}
+        </div>
         <p className="text-sm text-faint mt-2">{o.delivery_slot}</p>
         {o.notes && <p className="text-sm text-muted mt-2 italic">“{o.notes}”</p>}
       </Card>

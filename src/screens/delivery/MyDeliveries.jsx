@@ -5,7 +5,7 @@ import { useAsync } from '../../hooks/useAsync'
 import { useAuth } from '../../context/contexts'
 import { Screen } from '../../components/layout/AppShell'
 import { Skeleton, EmptyState, ErrorState, Icon, Spinner } from '../../components/ui'
-import { rupees, formatDate } from '../../lib/format'
+import { rupees, formatDate, formatAddress } from '../../lib/format'
 
 /**
  * A rider's round. Deliberately narrow: only orders assigned to them and
@@ -74,7 +74,7 @@ export default function MyDeliveries() {
               </div>
               <p className="text-sm font-semibold">{o.ship_full_name}</p>
               <p className="text-xs text-muted line-clamp-2 leading-snug mb-2">
-                {[o.ship_line1, o.ship_line2, o.ship_landmark].filter(Boolean).join(', ')} — {o.ship_pincode}
+                {formatAddress(o)}
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-xs text-faint">{o.items.length} item{o.items.length > 1 ? 's' : ''}</span>

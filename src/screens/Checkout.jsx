@@ -12,7 +12,7 @@ import { readableError } from '../lib/supabase'
 import { Screen, ActionBar } from '../components/layout/AppShell'
 import { Button, Icon, Field, Input, Textarea, Spinner, EmptyState } from '../components/ui'
 import { AddressSheet } from './Addresses'
-import { rupees, toPaise } from '../lib/format'
+import { rupees, toPaise, formatAddress } from '../lib/format'
 
 export default function Checkout() {
   const navigate = useNavigate()
@@ -156,9 +156,7 @@ export default function Checkout() {
                        onChange={() => setAddressId(a.id)} className="w-5 h-5 mt-0.5 accent-[var(--c-brand)]" />
                 <div className="min-w-0 text-sm">
                   <p className="font-bold">{a.label} · {a.full_name}</p>
-                  <p className="text-muted leading-snug">
-                    {[a.line1, a.line2, a.landmark].filter(Boolean).join(', ')} — {a.pincode}
-                  </p>
+                  <p className="text-muted leading-snug">{formatAddress(a)}</p>
                   <p className="text-faint">{a.phone}</p>
                 </div>
               </label>

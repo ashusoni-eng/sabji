@@ -167,6 +167,18 @@ supabase/
 └── seed.sql      starter catalogue
 ```
 
+### Addresses
+
+Stored as separate fields rather than "address line 1 / 2", because a rider
+needs them separately: **House / Flat No.**, **Building Name**, **Colony /
+Society Name**, **Landmark**, **City**, **Pin code**. House, colony, city and
+pin code are required; building and landmark are optional.
+
+`line1` / `line2` still exist and are kept in step by a trigger, so anything
+reading them keeps working and older orders stay readable. Display goes through
+`formatAddress()` / `addressLines()` in `src/lib/format.js`, which accept an
+address row or an order's `ship_*` snapshot and fall back to the old lines.
+
 ### Three decisions worth knowing about
 
 **Money is integer paise, everywhere.** It becomes a rupee string exactly once,

@@ -7,7 +7,7 @@ import { useToast } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
 import { Screen, ActionBar } from '../../components/layout/AppShell'
 import { Button, Skeleton, ErrorState, Icon, ProductImage } from '../../components/ui'
-import { rupees, STATUS_LABEL } from '../../lib/format'
+import { rupees, formatAddress, addressLines, STATUS_LABEL } from '../../lib/format'
 
 export default function DeliveryDetail() {
   const { id } = useParams()
@@ -21,8 +21,7 @@ export default function DeliveryDetail() {
 
   const o = order.data
   const done = o.status === 'delivered'
-  const mapQuery = encodeURIComponent(
-    [o.ship_line1, o.ship_line2, o.ship_landmark, o.ship_pincode].filter(Boolean).join(', '))
+  const mapQuery = encodeURIComponent(formatAddress(o))
 
   async function markDelivered() {
     const ask = o.payment_method === 'online'
@@ -77,10 +76,9 @@ export default function DeliveryDetail() {
         <div className="flex items-start gap-3">
           <Icon name="location_on" className="text-brand shrink-0 mt-0.5" />
           <div className="min-w-0 flex-1">
-            <p className="text-sm leading-relaxed">
-              {[o.ship_line1, o.ship_line2, o.ship_landmark].filter(Boolean).join(', ')}
-              <br /><span className="tabular-nums">— {o.ship_pincode}</span>
-            </p>
+            <div className="text-sm leading-relaxed">
+              {addressLines(o).map((l, i) => <p key={i}>{l}</p>)}
+            </div>
             <p className="text-xs font-bold text-brand mt-1.5">Open in Maps</p>
           </div>
         </div>

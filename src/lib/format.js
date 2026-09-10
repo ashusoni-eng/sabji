@@ -63,3 +63,43 @@ export function displayPhone(e164) {
   if (!e164) return ''
   return e164.startsWith('+91') ? e164.slice(3) : e164
 }
+
+
+/**
+ * Addresses are stored as separate fields because a rider needs them separately.
+ * These render them for display, and accept either an address row (house_no)
+ * or an order's snapshot (ship_house_no), so every screen formats identically.
+ */
+export function addressParts(a = {}) {
+  const g = (k) => String(a[k] ?? a[`ship_${k}`] ?? '').trim()
+  const parts = {
+    house: [g('house_no'), g('building')].filter(Boolean).join(', '),
+    colony: g('colony'),
+    landmark: g('landmark'),
+    city: g('city'),
+    pincode: g('pincode'),
+  }
+  // Rows written before addresses were split still only have the old lines.
+  if (!parts.house && !parts.colony) {
+    parts.house = String(a.line1 ?? a.ship_line1 ?? '').trim()
+    parts.colony = String(a.line2 ?? a.ship_line2 ?? '').trim()
+  }
+  return parts
+}
+
+/** Single line, for compact places like a cart summary or an order list. */
+export function formatAddress(a) {
+  const p = addressParts(a)
+  const tail = [p.city, p.pincode].filter(Boolean).join(' ')
+  return [p.house, p.colony, p.landmark, tail].filter(Boolean).join(', ')
+}
+
+/** Two or three lines, for anywhere with room — order detail, a rider's screen. */
+export function addressLines(a) {
+  const p = addressParts(a)
+  return [
+    [p.house, p.colony].filter(Boolean).join(', '),
+    p.landmark,
+    [p.city, p.pincode].filter(Boolean).join(' — '),
+  ].filter(Boolean)
+}

@@ -1,8 +1,9 @@
 import { supabase } from '../lib/supabase'
 
 const ORDER_SELECT = `
-  id, order_no, status, ship_full_name, ship_phone, ship_line1, ship_line2,
-  ship_landmark, ship_pincode, delivery_slot, notes, subtotal_paise,
+  id, order_no, status, ship_full_name, ship_phone,
+  ship_house_no, ship_building, ship_colony, ship_landmark, ship_city, ship_pincode,
+  ship_line1, ship_line2, delivery_slot, notes, subtotal_paise,
   discount_paise, promo_code, delivery_fee_paise, total_paise, payment_method,
   payment_status, paid_amount_paise, paid_reference, paid_at, payment_confirmed_at,
   cancel_reason, placed_at, delivery_person_id,

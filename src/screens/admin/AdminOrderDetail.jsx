@@ -6,7 +6,7 @@ import { useAsync } from '../../hooks/useAsync'
 import { useToast } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
 import { Button, Sheet, Skeleton, ErrorState, StatusPill, PaymentBadge, Icon, ProductImage } from '../../components/ui'
-import { rupees, formatDate, STATUS_LABEL, nextStatus } from '../../lib/format'
+import { rupees, formatDate, addressLines, STATUS_LABEL, nextStatus } from '../../lib/format'
 
 export default function AdminOrderDetail() {
   const { id } = useParams()
@@ -106,10 +106,9 @@ export default function AdminOrderDetail() {
       )}
 
       <Card title="Deliver to">
-        <p className="text-sm leading-relaxed">
-          {[o.ship_line1, o.ship_line2, o.ship_landmark].filter(Boolean).join(', ')}<br />
-          <span className="tabular-nums">— {o.ship_pincode}</span>
-        </p>
+        <div className="text-sm leading-relaxed">
+          {addressLines(o).map((l, i) => <p key={i}>{l}</p>)}
+        </div>
         <p className="text-sm font-semibold text-brand mt-2">{o.delivery_slot}</p>
         {o.notes && (
           <p className="text-sm text-muted mt-2 p-2.5 bg-surface-2 rounded-lg italic">“{o.notes}”</p>

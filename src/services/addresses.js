@@ -14,9 +14,11 @@ export async function saveAddress(addr, userId) {
     label: addr.label || 'Home',
     full_name: addr.full_name,
     phone: addr.phone,
-    line1: addr.line1,
-    line2: addr.line2 || '',
+    house_no: addr.house_no,
+    building: addr.building || '',
+    colony: addr.colony,
     landmark: addr.landmark || '',
+    city: addr.city,
     pincode: addr.pincode,
     is_default: !!addr.is_default,
   }

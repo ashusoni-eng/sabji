@@ -6,9 +6,13 @@ import { useToast } from '../context/contexts'
 import { readableError } from '../lib/supabase'
 import { Screen } from '../components/layout/AppShell'
 import { Button, Field, Input, Sheet, EmptyState, ErrorState, Icon, Skeleton } from '../components/ui'
-import { displayPhone, normalisePhone } from '../lib/format'
+import { displayPhone, normalisePhone, formatAddress } from '../lib/format'
 
-const BLANK = { label: 'Home', full_name: '', phone: '', line1: '', line2: '', landmark: '', pincode: '', is_default: false }
+const BLANK = {
+  label: 'Home', full_name: '', phone: '',
+  house_no: '', building: '', colony: '', landmark: '', city: '', pincode: '',
+  is_default: false,
+}
 
 export function AddressSheet({ open, onClose, userId, initial, onSaved }) {
   const toast = useToast()
@@ -24,7 +28,9 @@ export function AddressSheet({ open, onClose, userId, initial, onSaved }) {
     const e = {}
     if (!form.full_name.trim()) e.full_name = 'Required'
     if (!normalisePhone(form.phone)) e.phone = 'Enter a 10-digit mobile number'
-    if (!form.line1.trim()) e.line1 = 'Required'
+    if (!form.house_no.trim()) e.house_no = 'Required'
+    if (!form.colony.trim()) e.colony = 'Required'
+    if (!form.city.trim()) e.city = 'Required'
     if (!/^\d{6}$/.test(form.pincode.trim())) e.pincode = 'Enter a 6-digit pincode'
     setErrors(e)
     return Object.keys(e).length === 0
@@ -67,18 +73,27 @@ export function AddressSheet({ open, onClose, userId, initial, onSaved }) {
           <Input value={displayPhone(form.phone)} onChange={set('phone')} invalid={!!errors.phone}
                  inputMode="numeric" autoComplete="tel" maxLength={10} placeholder="9876543210" />
         </Field>
-        <Field label="House / flat / building" required error={errors.line1}>
-          <Input value={form.line1} onChange={set('line1')} invalid={!!errors.line1}
-                 autoComplete="address-line1" placeholder="B-402, Green Residency" />
+        <Field label="House / Flat No." required error={errors.house_no}>
+          <Input value={form.house_no} onChange={set('house_no')} invalid={!!errors.house_no}
+                 autoComplete="address-line1" placeholder="B-402" maxLength={40} />
         </Field>
-        <Field label="Street / area">
-          <Input value={form.line2} onChange={set('line2')} autoComplete="address-line2"
-                 placeholder="Sector 12, Dwarka" />
+        <Field label="Building Name">
+          <Input value={form.building} onChange={set('building')}
+                 placeholder="Green Residency" maxLength={60} />
         </Field>
-        <Field label="Landmark" hint="Helps the delivery person find you">
-          <Input value={form.landmark} onChange={set('landmark')} placeholder="Near Shiv Mandir" />
+        <Field label="Colony / Society Name" required error={errors.colony}>
+          <Input value={form.colony} onChange={set('colony')} invalid={!!errors.colony}
+                 autoComplete="address-line2" placeholder="Sector 12, Dwarka" maxLength={80} />
         </Field>
-        <Field label="Pincode" required error={errors.pincode}>
+        <Field label="Landmark" hint="What the delivery person will actually look for">
+          <Input value={form.landmark} onChange={set('landmark')}
+                 placeholder="Near Shiv Mandir" maxLength={60} />
+        </Field>
+        <Field label="City" required error={errors.city}>
+          <Input value={form.city} onChange={set('city')} invalid={!!errors.city}
+                 autoComplete="address-level2" placeholder="New Delhi" maxLength={50} />
+        </Field>
+        <Field label="Pin code" required error={errors.pincode}>
           <Input value={form.pincode} onChange={set('pincode')} invalid={!!errors.pincode}
                  inputMode="numeric" maxLength={6} autoComplete="postal-code" placeholder="110075" />
         </Field>
@@ -143,9 +158,7 @@ export default function Addresses() {
                 </div>
               </div>
               <p className="text-sm font-semibold">{a.full_name}</p>
-              <p className="text-sm text-muted leading-snug">
-                {[a.line1, a.line2, a.landmark].filter(Boolean).join(', ')} — {a.pincode}
-              </p>
+              <p className="text-sm text-muted leading-snug">{formatAddress(a)}</p>
               <p className="text-sm text-faint">{a.phone}</p>
             </div>
           ))}
