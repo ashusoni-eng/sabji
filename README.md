@@ -78,9 +78,14 @@ run the production path. Only the proof that you own the number is skipped; the
 number itself is still written to your profile, so promoting an admin by phone
 works normally.
 
-One caveat: identity lives with the browser session rather than the number, so
-signing in on a second device creates a separate account with its own order
-history. That goes away as soon as real SMS is switched on.
+One caveat: anonymous auth mints a **new user on every sign-in**, so one phone
+number accumulates several profiles — a second device or cleared storage makes
+another. Roles, staff and delivery all key off the phone (migration 016), so
+they behave as one person regardless. What does not carry across is a
+customer's own order history, which stays with the account that placed it.
+
+Real phone OTP removes the duplicates entirely: Supabase reuses the user for a
+given number.
 
 **Going live.** Unset `VITE_DEV_STATIC_OTP`, then **Authentication → Providers →
 Phone**, enable it and connect an SMS provider (Twilio, MessageBird, Vonage or
