@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { adminOrders, subscribeToOrders, dailySummary } from '../../services/orders'
 import { useAsync } from '../../hooks/useAsync'
 import { useToast } from '../../context/contexts'
-import { Skeleton, EmptyState, ErrorState, StatusPill, Icon } from '../../components/ui'
+import { Skeleton, EmptyState, ErrorState, StatusPill, PaymentBadge, Icon } from '../../components/ui'
 import { rupees, formatDate, STATUS_LABEL } from '../../lib/format'
 
 const FILTERS = [
@@ -85,14 +85,19 @@ export default function AdminOrders() {
                   <p className="font-bold tabular-nums">{o.order_no}</p>
                   <p className="text-xs text-faint">{formatDate(o.placed_at)}</p>
                 </div>
-                <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
+                <div className="flex flex-col items-end gap-1">
+                  <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
+                  <PaymentBadge method={o.payment_method} status={o.payment_status} compact />
+                </div>
               </div>
               <p className="text-sm font-semibold">{o.ship_full_name} · {o.ship_phone}</p>
               <p className="text-xs text-muted line-clamp-1 mb-2">
                 {o.items.map((i) => `${i.qty}× ${i.product_name}`).join(', ')}
               </p>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-faint">{o.delivery_slot}</span>
+                <span className="text-xs text-faint">
+                  {o.delivery_slot}{o.payment_method === 'cod' ? ' · cash' : ''}
+                </span>
                 <span className="font-bold tabular-nums flex items-center gap-1">
                   {rupees(o.total_paise)}
                   <Icon name="chevron_right" className="text-[18px] text-faint" />

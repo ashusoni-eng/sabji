@@ -34,6 +34,8 @@ export function StoreProvider({ children }) {
       reload: load,
       logoUrl: publicUrl(settings?.logo_path),
       bannerUrl: publicUrl(settings?.banner_path),
+      paymentQrUrl: publicUrl(settings?.payment_qr_path),
+      onlinePaymentReady: !!(settings?.online_payment_enabled && settings?.payment_qr_path),
     }}>
       {children}
     </StoreContext.Provider>

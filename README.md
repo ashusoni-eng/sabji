@@ -270,6 +270,31 @@ is enforced in `set_order_status()` and by RLS, not just by hiding buttons.
 picks a rider. With exactly one rider on the books there is nothing to choose,
 so the server assigns them and no picker is shown.
 
+## Payment
+
+Cash on delivery, plus optional UPI. The shop uploads a payment QR under
+**Admin → More → Online payment** and switches it on; customers then get a
+"Pay online" choice at checkout, scan the QR in their own UPI app, enter what
+they sent, and mark it paid.
+
+**Nothing here verifies that money arrived.** There is no gateway and no
+webhook, so what the customer taps is a *claim*. The order carries that
+distinction explicitly:
+
+| `payment_status` | Means |
+|---|---|
+| `pending` | Cash on delivery |
+| `claimed` | The customer says they paid — amount, time, optional UPI reference |
+| `confirmed` | The shop checked their own UPI app and agreed |
+
+The admin badge shows **Paid · unverified** for a claim and **Paid** only once
+confirmed, and the order screen flags a mismatch ("Short by ₹20") when the
+amount sent does not match the total. Riders see prepaid orders as *already
+paid* with nothing to collect.
+
+Removing the QR also switches online payment off, so checkout can never offer a
+method the shop has no way to receive.
+
 ## Promo codes
 
 Created under **Admin → Promos**: percentage or flat discount, optional cap,

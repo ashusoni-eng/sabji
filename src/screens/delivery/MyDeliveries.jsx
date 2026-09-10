@@ -33,7 +33,8 @@ export default function MyDeliveries() {
 
   const live = (data || []).filter((o) => o.status === 'out_for_delivery')
   const done = (data || []).filter((o) => o.status === 'delivered')
-  const cash = live.reduce((n, o) => n + o.total_paise, 0)
+  // Prepaid orders are not cash the rider carries.
+  const cash = live.reduce((n, o) => n + (o.payment_method === 'online' ? 0 : o.total_paise), 0)
 
   return (
     <Screen title="My deliveries">

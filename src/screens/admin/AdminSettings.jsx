@@ -20,6 +20,7 @@ export default function AdminSettings() {
   const [uploading, setUploading] = useState(null)
   const logoRef = useRef(null)
   const bannerRef = useRef(null)
+  const qrRef = useRef(null)
   const settings = useAsync(() => getSettings(), [])
   const summary = useAsync(() => dailySummary(7), [])
   const [form, setForm] = useState(null)
@@ -32,6 +33,9 @@ export default function AdminSettings() {
     try {
       await saveSettings({
         banner_text: form.banner_text || '',
+        online_payment_enabled: !!form.online_payment_enabled,
+        upi_id: form.upi_id || '',
+        payment_note: form.payment_note || '',
         support_phone: form.support_phone || '',
         support_email: form.support_email || '',
         delivery_fee_paise: form.delivery_fee_paise,
@@ -56,8 +60,9 @@ export default function AdminSettings() {
     try {
       const compressed = await compressProductImage(file)
       const path = await uploadBrandingImage(compressed, kind)
-      await saveSettings({ [kind === 'logo' ? 'logo_path' : 'banner_path']: path })
-      toast.ok(kind === 'logo' ? 'Logo updated' : 'Banner updated')
+      const col = { logo: 'logo_path', banner: 'banner_path', qr: 'payment_qr_path' }[kind]
+      await saveSettings({ [col]: path })
+      toast.ok({ logo: 'Logo updated', banner: 'Banner updated', qr: 'Payment QR updated' }[kind])
       settings.reload()
       store.reload()
     } catch (err) {
@@ -67,8 +72,13 @@ export default function AdminSettings() {
 
   async function clearImage(kind) {
     try {
-      await saveSettings({ [kind === 'logo' ? 'logo_path' : 'banner_path']: null })
-      toast.ok(kind === 'logo' ? 'Logo removed' : 'Banner removed')
+      const col = { logo: 'logo_path', banner: 'banner_path', qr: 'payment_qr_path' }[kind]
+      // Turning off online payment alongside the QR, so checkout can never
+      // offer a method the shop has no way to receive.
+      await saveSettings(kind === 'qr'
+        ? { payment_qr_path: null, online_payment_enabled: false }
+        : { [col]: null })
+      toast.ok({ logo: 'Logo removed', banner: 'Banner removed', qr: 'Payment QR removed' }[kind])
       settings.reload()
       store.reload()
     } catch (err) { toast.error(readableError(err)) }
@@ -178,6 +188,66 @@ export default function AdminSettings() {
                     onChange={(e) => setForm((f) => ({ ...f, banner_text: e.target.value }))}
                     placeholder="Aaj sb fresh aaya hai" />
         </Field>
+      </section>
+
+      <section className="bg-surface rounded-xl border border-line p-4 mb-4">
+        <h2 className="font-headline font-extrabold mb-1">Online payment</h2>
+        <p className="text-[13px] text-muted mb-4 leading-snug">
+          Upload your UPI QR and customers can pay at checkout instead of paying
+          cash. They tell the app what they sent — <strong>always check your own
+          UPI app before packing</strong>, then mark the order confirmed.
+        </p>
+
+        <p className="text-[13px] font-bold text-muted mb-1.5">Payment QR</p>
+        <div className="flex items-start gap-4 mb-4">
+          <button onClick={() => qrRef.current?.click()} disabled={uploading}
+                  className="w-32 h-32 shrink-0 rounded-xl border-2 border-dashed border-line
+                             bg-white grid place-items-center overflow-hidden
+                             active:scale-[.98] transition-transform">
+            {uploading === 'qr' ? <Spinner />
+              : store.paymentQrUrl
+                ? <img src={store.paymentQrUrl} alt="Payment QR" className="w-full h-full object-contain p-1" />
+                : <span className="flex flex-col items-center gap-1 text-faint">
+                    <Icon name="qr_code_2" className="text-[28px]" />
+                    <span className="text-xs font-semibold">Add QR</span>
+                  </span>}
+          </button>
+          <div className="text-[13px] text-muted leading-snug">
+            {store.paymentQrUrl
+              ? 'Shown at checkout when a customer picks Pay online.'
+              : 'Screenshot the QR from your UPI app and upload it here.'}
+            {store.paymentQrUrl && (
+              <button onClick={() => clearImage('qr')}
+                      className="block text-danger font-bold mt-1.5 min-h-[36px]">Remove QR</button>
+            )}
+          </div>
+        </div>
+        <input ref={qrRef} type="file" accept="image/jpeg,image/png,image/webp"
+               onChange={(e) => pickImage(e, 'qr')} className="hidden" />
+
+        <label className={`flex items-center gap-3 min-h-[44px] mb-3
+                           ${store.paymentQrUrl ? 'cursor-pointer' : 'opacity-50'}`}>
+          <input type="checkbox" checked={!!form.online_payment_enabled}
+                 disabled={!store.paymentQrUrl}
+                 onChange={(e) => setForm((f) => ({ ...f, online_payment_enabled: e.target.checked }))}
+                 className="w-5 h-5 accent-[var(--c-brand)]" />
+          <span className="font-semibold text-sm">
+            Offer online payment at checkout
+            {!store.paymentQrUrl && <span className="block text-xs text-faint">Upload a QR first</span>}
+          </span>
+        </label>
+
+        <div className="flex flex-col gap-4">
+          <Field label="UPI ID" hint="Optional — shown as a fallback if the QR will not scan">
+            <Input value={form.upi_id || ''} onChange={(e) => setForm((f) => ({ ...f, upi_id: e.target.value }))}
+                   placeholder="suvidha@okhdfcbank" autoCapitalize="none" />
+          </Field>
+          <Field label="Instructions at checkout">
+            <Textarea rows={2} maxLength={140} value={form.payment_note || ''}
+                      onChange={(e) => setForm((f) => ({ ...f, payment_note: e.target.value }))}
+                      placeholder="Scan with any UPI app, pay, then enter the amount below." />
+          </Field>
+        </div>
       </section>
 
       <section className="bg-surface rounded-xl border border-line p-4 mb-4">

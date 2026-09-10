@@ -23,7 +23,18 @@ export default function OrderPlaced() {
               Your order <span className="font-bold text-ink tabular-nums">{o.order_no}</span> is with the shop.
             </p>
             <p className="text-muted mb-6">
-              {o.delivery_slot} · Pay <span className="font-bold text-ink">{rupees(o.total_paise)}</span> in cash on delivery.
+              {o.delivery_slot} ·{' '}
+              {o.payment_method === 'online' ? (
+                <>
+                  You paid <span className="font-bold text-ink">
+                    {rupees(o.paid_amount_paise ?? o.total_paise)}
+                  </span> online. The shop will check it before packing.
+                </>
+              ) : (
+                <>
+                  Pay <span className="font-bold text-ink">{rupees(o.total_paise)}</span> in cash on delivery.
+                </>
+              )}
             </p>
             <div className="flex flex-col gap-2.5">
               <Button full size="lg" onClick={() => navigate(`/orders/${o.id}`, { replace: true })}>

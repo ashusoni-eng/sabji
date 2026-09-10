@@ -24,6 +24,12 @@ export const STATUS_LABEL = {
   cancelled: 'Cancelled',
 }
 
+export const PAYMENT_LABEL = {
+  pending: 'Cash on delivery',
+  claimed: 'Paid · unverified',
+  confirmed: 'Paid',
+}
+
 export const STATUS_FLOW = ['placed', 'confirmed', 'packed', 'out_for_delivery', 'delivered']
 
 /** The one status an admin can move to next, or null at a terminal state. */

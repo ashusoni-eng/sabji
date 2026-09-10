@@ -54,7 +54,7 @@ begin
   end if;
   if p_subtotal < v_p.min_order_paise then
     return query select null::uuid, v_p.code, 0,
-      format('Spend at least %s%s to use this code.', chr(8377), v_p.min_order_paise / 100); return;
+      format('Spend at least ₹%s to use this code.', v_p.min_order_paise / 100); return;
   end if;
 
   if v_p.max_redemptions is not null then
@@ -167,9 +167,7 @@ begin
   end loop;
 
   if v_subtotal < v_settings.min_order_paise then
-    -- RAISE uses % as its placeholder (not %s), so the amount is concatenated in.
-    raise exception 'Minimum order is %.',
-      chr(8377) || (v_settings.min_order_paise / 100)::text
+    raise exception 'Minimum order is ₹%.', (v_settings.min_order_paise / 100)
       using errcode = 'P0007';
   end if;
 

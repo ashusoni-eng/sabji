@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "node scripts/icon-subset.mjs && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "icons": "node scripts/icon-subset.mjs",
+    "icons:check": "node scripts/icon-subset.mjs --check"
   },
   "dependencies": {
     "@fontsource/dm-sans": "^5.3.0",

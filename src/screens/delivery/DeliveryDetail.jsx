@@ -25,7 +25,10 @@ export default function DeliveryDetail() {
     [o.ship_line1, o.ship_line2, o.ship_landmark, o.ship_pincode].filter(Boolean).join(', '))
 
   async function markDelivered() {
-    if (!confirm(`Confirm you collected ${rupees(o.total_paise)} in cash and handed over the order?`)) return
+    const ask = o.payment_method === 'online'
+      ? 'Confirm you handed over the order? It was paid online, so collect nothing.'
+      : `Confirm you collected ${rupees(o.total_paise)} in cash and handed over the order?`
+    if (!confirm(ask)) return
     setBusy(true)
     try {
       await setOrderStatus(o.id, 'delivered', 'Delivered by rider')
@@ -37,9 +40,18 @@ export default function DeliveryDetail() {
 
   return (
     <Screen title={o.order_no} back nav={false} action={!done}>
-      <div className="bg-brand-soft rounded-xl p-4 mb-4">
-        <p className="text-xs font-bold uppercase tracking-wide text-brand-ink mb-1">Collect in cash</p>
-        <p className="font-headline font-extrabold text-3xl tabular-nums">{rupees(o.total_paise)}</p>
+      <div className={`rounded-xl p-4 mb-4 ${o.payment_method === 'online' ? 'bg-surface-2' : 'bg-brand-soft'}`}>
+        <p className="text-xs font-bold uppercase tracking-wide text-brand-ink mb-1">
+          {o.payment_method === 'online' ? 'Already paid online' : 'Collect in cash'}
+        </p>
+        <p className="font-headline font-extrabold text-3xl tabular-nums">
+          {o.payment_method === 'online' ? rupees(0) : rupees(o.total_paise)}
+        </p>
+        {o.payment_method === 'online' && (
+          <p className="text-sm text-muted mt-1">
+            Order value {rupees(o.total_paise)} — do not ask for money.
+          </p>
+        )}
         {o.discount_paise > 0 && (
           <p className="text-xs text-muted mt-1">
             After {rupees(o.discount_paise)} discount{o.promo_code ? ` (${o.promo_code})` : ''}
@@ -107,7 +119,9 @@ export default function DeliveryDetail() {
       ) : (
         <ActionBar>
           <Button full size="lg" loading={busy} onClick={markDelivered} icon="check_circle">
-            Delivered · collected {rupees(o.total_paise)}
+            {o.payment_method === 'online'
+              ? 'Delivered'
+              : `Delivered · collected ${rupees(o.total_paise)}`}
           </Button>
         </ActionBar>
       )}

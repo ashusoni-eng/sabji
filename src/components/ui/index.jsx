@@ -234,6 +234,26 @@ export function StatusPill({ status, label }) {
   )
 }
 
+/**
+ * Payment state at a glance. "Paid" and "Paid · unverified" are deliberately
+ * different: the second means only that the customer tapped a button, and the
+ * shop has not yet checked their own UPI app.
+ */
+export function PaymentBadge({ method, status, compact = false }) {
+  if (method !== 'online') return null
+  const confirmed = status === 'confirmed'
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full
+                      text-[10px] font-bold uppercase tracking-wide whitespace-nowrap
+                      ${confirmed
+                        ? 'bg-brand text-on-brand'
+                        : 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200'}`}>
+      <Icon name={confirmed ? 'verified' : 'schedule'} fill className="text-[12px]" />
+      {confirmed ? 'Paid' : compact ? 'Paid?' : 'Paid · unverified'}
+    </span>
+  )
+}
+
 /** Product image with dimensions and lazy loading, so the grid does not shift. */
 export function ProductImage({ src, alt, className = '' }) {
   return src ? (

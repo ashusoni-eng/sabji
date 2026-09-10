@@ -4,6 +4,7 @@ const ORDER_SELECT = `
   id, order_no, status, ship_full_name, ship_phone, ship_line1, ship_line2,
   ship_landmark, ship_pincode, delivery_slot, notes, subtotal_paise,
   discount_paise, promo_code, delivery_fee_paise, total_paise, payment_method,
+  payment_status, paid_amount_paise, paid_reference, paid_at, payment_confirmed_at,
   cancel_reason, placed_at, delivery_person_id,
   items:order_items (
     id, product_id, product_name, variant_label, unit, image_path, image_url,
@@ -16,7 +17,10 @@ const ORDER_SELECT = `
  * says WHICH variant and HOW MANY, never how much. The idempotency key means a
  * double tap on a bad connection returns the first order instead of making a second.
  */
-export async function placeOrder({ items, addressId, deliverySlot, notes, idempotencyKey, promoCode }) {
+export async function placeOrder({
+  items, addressId, deliverySlot, notes, idempotencyKey, promoCode,
+  paymentMethod = 'cod', paidAmountPaise = null, paidReference = null,
+}) {
   const { data, error } = await supabase.rpc('place_order', {
     p_items: items.map((i) => ({ variant_id: i.variantId, qty: i.qty })),
     p_address_id: addressId,
@@ -24,6 +28,9 @@ export async function placeOrder({ items, addressId, deliverySlot, notes, idempo
     p_notes: notes || '',
     p_idempotency_key: idempotencyKey,
     p_promo_code: promoCode || null,
+    p_payment_method: paymentMethod,
+    p_paid_amount_paise: paidAmountPaise,
+    p_paid_reference: paidReference,
   })
   if (error) throw error
   return Array.isArray(data) ? data[0] : data
@@ -67,6 +74,14 @@ export async function adminOrders({ status } = {}) {
 export async function setOrderStatus(orderId, status, note = '', riderId = null) {
   const { error } = await supabase.rpc('set_order_status', {
     p_order_id: orderId, p_status: status, p_note: note, p_rider_id: riderId,
+  })
+  if (error) throw error
+}
+
+/** The shop checked their own UPI app and agrees the money arrived. */
+export async function confirmPayment(orderId, confirmed = true) {
+  const { error } = await supabase.rpc('confirm_order_payment', {
+    p_order_id: orderId, p_confirmed: confirmed,
   })
   if (error) throw error
 }

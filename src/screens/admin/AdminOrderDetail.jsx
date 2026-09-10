@@ -1,11 +1,11 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { getOrder, orderHistory, setOrderStatus, listRiders } from '../../services/orders'
+import { getOrder, orderHistory, setOrderStatus, listRiders, confirmPayment } from '../../services/orders'
 import { imageSrc } from '../../services/catalog'
 import { useAsync } from '../../hooks/useAsync'
 import { useToast } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
-import { Button, Sheet, Skeleton, ErrorState, StatusPill, Icon, ProductImage } from '../../components/ui'
+import { Button, Sheet, Skeleton, ErrorState, StatusPill, PaymentBadge, Icon, ProductImage } from '../../components/ui'
 import { rupees, formatDate, STATUS_LABEL, nextStatus } from '../../lib/format'
 
 export default function AdminOrderDetail() {
@@ -48,6 +48,16 @@ export default function AdminOrderDetail() {
     return advance('out_for_delivery')     // server auto-assigns the only rider
   }
 
+  async function togglePaymentConfirmed(next) {
+    setBusy(true)
+    try {
+      await confirmPayment(o.id, next)
+      toast.ok(next ? 'Payment confirmed' : 'Confirmation withdrawn')
+      order.reload(); history.reload()
+    } catch (e) { toast.error(readableError(e)) }
+    finally { setBusy(false) }
+  }
+
   async function cancel() {
     const reason = prompt('Reason for cancelling (the customer will see this):')
     if (reason === null) return
@@ -63,7 +73,10 @@ export default function AdminOrderDetail() {
 
       <div className="flex items-start justify-between gap-3 mb-1">
         <h1 className="font-headline font-extrabold text-2xl tabular-nums">{o.order_no}</h1>
-        <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
+        <div className="flex flex-col items-end gap-1.5">
+          <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
+          <PaymentBadge method={o.payment_method} status={o.payment_status} />
+        </div>
       </div>
       <p className="text-sm text-faint mb-5">{formatDate(o.placed_at)}</p>
 
@@ -103,6 +116,74 @@ export default function AdminOrderDetail() {
         )}
       </Card>
 
+      {o.payment_method === 'online' ? (
+        <section className={`rounded-xl border p-4 mb-4
+                             ${o.payment_status === 'confirmed'
+                               ? 'border-brand bg-brand-soft'
+                               : 'border-amber-300 bg-amber-50 dark:border-amber-700/50 dark:bg-amber-900/20'}`}>
+          <h2 className="font-headline font-extrabold mb-2">Paid online</h2>
+
+          <div className="flex items-baseline justify-between mb-1">
+            <span className="text-sm text-muted">Customer says they sent</span>
+            <span className="font-headline font-extrabold text-xl tabular-nums">
+              {rupees(o.paid_amount_paise ?? 0)}
+            </span>
+          </div>
+          <div className="flex items-baseline justify-between text-sm">
+            <span className="text-muted">Order total</span>
+            <span className="font-bold tabular-nums">{rupees(o.total_paise)}</span>
+          </div>
+
+          {o.paid_amount_paise != null && o.paid_amount_paise !== o.total_paise && (
+            <p className="text-sm font-bold text-danger mt-2">
+              {o.paid_amount_paise < o.total_paise
+                ? `Short by ${rupees(o.total_paise - o.paid_amount_paise)}`
+                : `Overpaid by ${rupees(o.paid_amount_paise - o.total_paise)}`}
+            </p>
+          )}
+
+          {o.paid_reference && (
+            <p className="text-sm mt-2">
+              <span className="text-muted">Reference </span>
+              <span className="font-bold tabular-nums">{o.paid_reference}</span>
+            </p>
+          )}
+          {o.paid_at && <p className="text-xs text-faint mt-1">Marked paid {formatDate(o.paid_at)}</p>}
+
+          {o.payment_status === 'confirmed' ? (
+            <div className="mt-3">
+              <p className="text-sm font-bold text-brand-ink flex items-center gap-1.5">
+                <Icon name="verified" fill className="text-[18px]" />
+                You confirmed this on {formatDate(o.payment_confirmed_at)}
+              </p>
+              <button onClick={() => togglePaymentConfirmed(false)} disabled={busy}
+                      className="text-[13px] font-bold text-danger mt-1 min-h-[36px]">
+                Withdraw confirmation
+              </button>
+            </div>
+          ) : (
+            <>
+              <p className="text-[13px] text-muted mt-3 mb-2 leading-snug">
+                Check your UPI app for this amount before packing. The app cannot
+                verify it — only you can.
+              </p>
+              <Button full loading={busy} icon="verified"
+                      onClick={() => togglePaymentConfirmed(true)}>
+                I have received {rupees(o.paid_amount_paise ?? o.total_paise)}
+              </Button>
+            </>
+          )}
+        </section>
+      ) : (
+        <div className="rounded-xl border border-line bg-surface p-3.5 mb-4 flex items-center gap-3">
+          <Icon name="payments" className="text-muted shrink-0" />
+          <p className="text-sm">
+            <span className="font-bold">Cash on delivery</span>
+            <span className="text-muted"> — collect {rupees(o.total_paise)} at the door.</span>
+          </p>
+        </div>
+      )}
+
       <Card title={`Pack ${o.items.length} item${o.items.length > 1 ? 's' : ''}`}>
         <div className="flex flex-col gap-3">
           {o.items.map((i) => (
@@ -128,7 +209,9 @@ export default function AdminOrderDetail() {
           )}
           <Row label="Delivery" value={o.delivery_fee_paise === 0 ? 'Free' : rupees(o.delivery_fee_paise)} />
           <div className="flex justify-between mt-2 pt-2 border-t border-line">
-            <span className="font-headline font-extrabold">Collect in cash</span>
+            <span className="font-headline font-extrabold">
+              {o.payment_method === 'online' ? 'Order total' : 'Collect in cash'}
+            </span>
             <span className="font-headline font-extrabold text-lg tabular-nums">{rupees(o.total_paise)}</span>
           </div>
         </div>

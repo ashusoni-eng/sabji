@@ -6,7 +6,7 @@ import { useAsync } from '../hooks/useAsync'
 import { useToast } from '../context/contexts'
 import { readableError } from '../lib/supabase'
 import { Screen } from '../components/layout/AppShell'
-import { Button, Skeleton, ErrorState, StatusPill, Icon, ProductImage } from '../components/ui'
+import { Button, Skeleton, ErrorState, StatusPill, PaymentBadge, Icon, ProductImage } from '../components/ui'
 import { rupees, formatDate, STATUS_LABEL, STATUS_FLOW } from '../lib/format'
 
 export default function OrderDetail() {
@@ -45,7 +45,10 @@ export default function OrderDetail() {
       <div className="bg-surface rounded-xl border border-line p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
           <span className="text-sm text-faint">{formatDate(o.placed_at)}</span>
-          <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
+          <div className="flex items-center gap-2">
+            <PaymentBadge method={o.payment_method} status={o.payment_status} compact />
+            <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
+          </div>
         </div>
 
         {o.status === 'cancelled' ? (
@@ -103,9 +106,16 @@ export default function OrderDetail() {
             <span className="font-headline font-extrabold">Total</span>
             <span className="font-headline font-extrabold tabular-nums">{rupees(o.total_paise)}</span>
           </div>
-          <p className="text-xs text-faint mt-2">
-            Paid by cash on delivery
-          </p>
+          {o.payment_method === 'online' ? (
+            <p className="text-xs text-faint mt-2">
+              Paid online · {rupees(o.paid_amount_paise ?? o.total_paise)}
+              {o.payment_status === 'confirmed'
+                ? ' · confirmed by the shop'
+                : ' · the shop is checking this'}
+            </p>
+          ) : (
+            <p className="text-xs text-faint mt-2">Pay in cash when your order arrives</p>
+          )}
         </div>
       </Card>
 
