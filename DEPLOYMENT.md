@@ -218,7 +218,7 @@ give the server access to everything you can reach.
 
 ```bash
 sudo -u sabji ssh -o StrictHostKeyChecking=accept-new -T git@github.com
-# expect: "Hi yashtomer/sabji! You've successfully authenticated..."
+# expect: "Hi ashusoni-eng/sabji! You've successfully authenticated..."
 ```
 
 ### Step 3 — Install Node 22
@@ -245,13 +245,14 @@ sudo -u sabji bash -lc '
 ### Step 4 — Clone and configure
 
 ```bash
-sudo -u sabji git clone git@github.com:yashtomer/sabji.git /home/sabji/app
+sudo -u sabji git clone git@github.com:ashusoni-eng/sabji.git /home/sabji/app
 cd /home/sabji/app
 sudo -u sabji git checkout <the branch you are deploying>
 ```
 
-> The default branch is the original static mockup, and `main` holds a
-> different Next.js implementation. Check out the branch you actually mean.
+> The fork carries a single branch, `sabji-react-app-11245093278792861518`,
+> which is this app. (The upstream repo's `main` holds a separate Next.js
+> implementation; it was not copied into the fork.)
 
 ```bash
 sudo -u sabji tee /home/sabji/app/.env.production >/dev/null <<'ENV'
