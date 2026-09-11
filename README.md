@@ -80,9 +80,9 @@ works normally.
 
 One caveat: anonymous auth mints a **new user on every sign-in**, so one phone
 number accumulates several profiles — a second device or cleared storage makes
-another. Roles, staff and delivery all key off the phone (migration 016), so
-they behave as one person regardless. What does not carry across is a
-customer's own order history, which stays with the account that placed it.
+another. Everything a person owns keys off the phone rather than the user id
+(migrations 016 and 018): roles, deliveries, addresses, order history and
+promo usage all follow the number, so the duplicates are invisible in use.
 
 Real phone OTP removes the duplicates entirely: Supabase reuses the user for a
 given number.

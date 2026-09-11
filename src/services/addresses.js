@@ -22,9 +22,12 @@ export async function saveAddress(addr, userId) {
     pincode: addr.pincode,
     is_default: !!addr.is_default,
   }
-  // Only one default per user.
+  // Only one default per person. No user filter here on purpose: RLS scopes
+  // the update to every address on the caller's phone, which spans the
+  // separate user ids that anonymous sign-in creates. Filtering by userId
+  // would leave an older session's default in place beside the new one.
   if (row.is_default) {
-    await supabase.from('addresses').update({ is_default: false }).eq('user_id', userId)
+    await supabase.from('addresses').update({ is_default: false }).eq('is_default', true)
   }
   const q = addr.id
     ? supabase.from('addresses').update(row).eq('id', addr.id).select().single()
