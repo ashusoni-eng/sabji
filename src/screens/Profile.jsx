@@ -10,7 +10,7 @@ export default function Profile() {
   const navigate = useNavigate()
   const { user, profile, isAdmin, isRider, signOut, updateProfile } = useAuth()
   const toast = useToast()
-  const { settings } = useStore()
+  const { settings, isSuper } = useStore()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -62,6 +62,19 @@ export default function Profile() {
           <Icon name="edit" className="text-[20px]" />
         </button>
       </div>
+
+      {isSuper && (
+        <button onClick={() => navigate('/super')}
+                className="w-full bg-accent text-on-brand rounded-xl p-4 mb-4 flex items-center gap-3
+                           text-left active:scale-[.99] transition-transform">
+          <Icon name="domain" fill className="text-[26px]" />
+          <div className="flex-1">
+            <p className="font-bold">Platform admin</p>
+            <p className="text-on-brand/80 text-sm">Manage shops and the WhatsApp bot</p>
+          </div>
+          <Icon name="chevron_right" />
+        </button>
+      )}
 
       {isAdmin && (
         <button onClick={() => navigate('/admin')}

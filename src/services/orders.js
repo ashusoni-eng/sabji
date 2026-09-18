@@ -6,7 +6,7 @@ const ORDER_SELECT = `
   ship_line1, ship_line2, delivery_slot, notes, subtotal_paise,
   discount_paise, promo_code, delivery_fee_paise, total_paise, payment_method,
   payment_status, paid_amount_paise, paid_reference, paid_at, payment_confirmed_at,
-  cancel_reason, placed_at, delivery_person_id,
+  cancel_reason, placed_at, delivery_person_id, tenant_id, channel,
   items:order_items (
     id, product_id, product_name, variant_label, unit, image_path, image_url,
     unit_price_paise, qty, line_total_paise
@@ -20,7 +20,7 @@ const ORDER_SELECT = `
  */
 export async function placeOrder({
   items, addressId, deliverySlot, notes, idempotencyKey, promoCode,
-  paymentMethod = 'cod', paidAmountPaise = null, paidReference = null,
+  paymentMethod = 'cod', paidAmountPaise = null, paidReference = null, tenantId,
 }) {
   const { data, error } = await supabase.rpc('place_order', {
     p_items: items.map((i) => ({ variant_id: i.variantId, qty: i.qty })),
@@ -32,6 +32,9 @@ export async function placeOrder({
     p_payment_method: paymentMethod,
     p_paid_amount_paise: paidAmountPaise,
     p_paid_reference: paidReference,
+    p_tenant_id: tenantId,
+    p_as_user: null,
+    p_channel: 'web',
   })
   if (error) throw error
   return Array.isArray(data) ? data[0] : data
@@ -64,8 +67,8 @@ export async function cancelMyOrder(orderId, reason) {
 }
 
 // ---------------------------------------------------------------- admin
-export async function adminOrders({ status } = {}) {
-  let q = supabase.from('orders').select(ORDER_SELECT).order('placed_at', { ascending: false })
+export async function adminOrders({ status, tenantId } = {}) {
+  let q = supabase.from('orders').select(ORDER_SELECT).eq('tenant_id', tenantId).order('placed_at', { ascending: false })
   if (status && status !== 'all') q = q.eq('status', status)
   const { data, error } = await q
   if (error) throw error
@@ -117,10 +120,10 @@ export async function dailySummary(days = 7) {
 }
 
 /** Realtime feed so the shop sees a new order without refreshing. */
-export function subscribeToOrders(onChange) {
+export function subscribeToOrders(onChange, tenantId) {
   const channel = supabase
-    .channel('orders-feed')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, onChange)
+    .channel('orders-feed-' + tenantId)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders', filter: `tenant_id=eq.${tenantId}` }, onChange)
     .subscribe()
   return () => supabase.removeChannel(channel)
 }

@@ -5,7 +5,7 @@ import { imageSrc } from '../../services/catalog'
 import { useAsync } from '../../hooks/useAsync'
 import { useToast } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
-import { Button, Sheet, Skeleton, ErrorState, StatusPill, PaymentBadge, Icon, ProductImage } from '../../components/ui'
+import { Button, Sheet, Skeleton, ErrorState, StatusPill, PaymentBadge, ChannelBadge, Icon, ProductImage } from '../../components/ui'
 import { rupees, formatDate, addressLines, STATUS_LABEL, nextStatus } from '../../lib/format'
 
 export default function AdminOrderDetail() {
@@ -76,6 +76,7 @@ export default function AdminOrderDetail() {
         <div className="flex flex-col items-end gap-1.5">
           <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
           <PaymentBadge method={o.payment_method} status={o.payment_status} />
+          <ChannelBadge channel={o.channel} />
         </div>
       </div>
       <p className="text-sm text-faint mb-5">{formatDate(o.placed_at)}</p>

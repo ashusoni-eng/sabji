@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCart } from '../context/contexts'
-import { useAuth } from '../context/contexts'
-import { useToast } from '../context/contexts'
+import { useCart, useAuth, useToast, useStore } from '../context/contexts'
 import { getSettings, imageSrc } from '../services/catalog'
 import { useAsync } from '../hooks/useAsync'
 import { Screen, ActionBar } from '../components/layout/AppShell'
@@ -14,7 +12,8 @@ export default function Cart() {
   const { lines, subtotalPaise, adjust, remove, revalidate, hasOutOfStock } = useCart()
   const { user } = useAuth()
   const toast = useToast()
-  const settings = useAsync(() => getSettings(), [])
+  const { tenantId } = useStore()
+  const settings = useAsync(() => (tenantId ? getSettings(tenantId) : null), [tenantId])
   const [checking, setChecking] = useState(true)
 
   // Prices move daily. Re-check them the moment the customer opens the cart,

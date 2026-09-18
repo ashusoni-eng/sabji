@@ -272,6 +272,37 @@ After the first deploy, add your production origin to Supabase under
 
 ---
 
+## Shops (multi-tenant)
+
+One database, many shops. Every shop-owned row carries a `tenant_id`, and RLS
+filters on it, so a shop admin can only ever see their own catalogue, orders,
+staff, promos and settings — verified: an admin of one shop cannot read, rename
+or delete another's products, change its settings, see its promos, advance its
+orders, or redeem its codes. Customers are not tenant-scoped; one person can buy
+from several shops, and each order records which.
+
+A **superadmin** (global allowlist, SQL-only) creates shops and assigns each
+one's first admin. The shop's **name is set by the superadmin** and is read-only
+to the shop; everything else is theirs. Each shop gets a human-readable ID —
+`SGS47400101` is the initials of its name, its pincode, and a two-digit sequence
+— which is what the WhatsApp QR carries.
+
+```sql
+insert into public.superadmins (phone, name) values ('+919522272781', 'Ashish');
+```
+
+Then Profile → **Platform admin**.
+
+The customer web app resolves its shop from a `/s/<SHOP_ID>` link, the shop last
+used on the device, or — when the platform has exactly one shop — that one.
+
+## Ordering on WhatsApp
+
+See [`supabase/functions/whatsapp-webhook/README.md`](supabase/functions/whatsapp-webhook/README.md).
+Customers scan a shop's QR, describe what they want in text or a voice note,
+and Gemini matches it to the catalogue. Orders land in the shop's admin with a
+WhatsApp badge.
+
 ## Roles
 
 | Role | Sees |

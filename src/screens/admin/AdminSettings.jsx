@@ -10,7 +10,8 @@ import { readableError } from '../../lib/supabase'
 import { Button, Field, Input, Textarea, Skeleton, ErrorState, Icon, Spinner } from '../../components/ui'
 import { rupees, toPaise, formatDay, normalisePhone } from '../../lib/format'
 import { compressProductImage } from '../../lib/image'
-import { STORE_NAME } from '../../lib/store'
+import { WhatsAppQr } from '../../components/WhatsAppQr'
+
 
 export default function AdminSettings() {
   const toast = useToast()
@@ -21,7 +22,7 @@ export default function AdminSettings() {
   const logoRef = useRef(null)
   const bannerRef = useRef(null)
   const qrRef = useRef(null)
-  const settings = useAsync(() => getSettings(), [])
+  const settings = useAsync(() => (store.tenantId ? getSettings(store.tenantId) : null), [store.tenantId])
   const summary = useAsync(() => dailySummary(7), [])
   const [form, setForm] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -44,7 +45,7 @@ export default function AdminSettings() {
         delivery_slots: form.delivery_slots,
         is_shop_open: form.is_shop_open,
         closed_message: form.closed_message,
-      })
+      }, store.tenantId)
       toast.ok('Settings saved')
       settings.reload()
       store.reload()
@@ -61,7 +62,7 @@ export default function AdminSettings() {
       const compressed = await compressProductImage(file)
       const path = await uploadBrandingImage(compressed, kind)
       const col = { logo: 'logo_path', banner: 'banner_path', qr: 'payment_qr_path' }[kind]
-      await saveSettings({ [col]: path })
+      await saveSettings({ [col]: path }, store.tenantId)
       toast.ok({ logo: 'Logo updated', banner: 'Banner updated', qr: 'Payment QR updated' }[kind])
       settings.reload()
       store.reload()
@@ -77,7 +78,7 @@ export default function AdminSettings() {
       // offer a method the shop has no way to receive.
       await saveSettings(kind === 'qr'
         ? { payment_qr_path: null, online_payment_enabled: false }
-        : { [col]: null })
+        : { [col]: null }, store.tenantId)
       toast.ok({ logo: 'Logo removed', banner: 'Banner removed', qr: 'Payment QR removed' }[kind])
       settings.reload()
       store.reload()
@@ -100,6 +101,15 @@ export default function AdminSettings() {
   return (
     <>
       <h1 className="font-headline font-extrabold text-2xl mb-4">More</h1>
+
+      <section className="bg-surface rounded-xl border border-line p-4 mb-4">
+        <h2 className="font-headline font-extrabold mb-1">Order on WhatsApp</h2>
+        <p className="text-[13px] text-muted mb-4 leading-snug">
+          Print this at the counter or share it. Customers scan, say what they need in a
+          message or a voice note, and the order lands here like any other.
+        </p>
+        {store.tenant && <WhatsAppQr tenant={store.tenant} />}
+      </section>
 
       <button onClick={() => navigate('/admin/categories')}
               className="w-full bg-surface rounded-xl border border-line p-4 mb-4 flex items-center gap-3
@@ -139,8 +149,8 @@ export default function AdminSettings() {
       <section className="bg-surface rounded-xl border border-line p-4 mb-4">
         <h2 className="font-headline font-extrabold mb-1">Branding</h2>
         <p className="text-[13px] text-muted mb-4 leading-snug">
-          The shop name is <strong>{STORE_NAME}</strong> and is fixed — it is baked into
-          the installed app. The logo and home banner are yours to change.
+          The shop name is <strong>{store.shopName}</strong> and was set by the platform —
+          contact them to change it. The logo and home banner are yours.
         </p>
 
         <p className="text-[13px] font-bold text-muted mb-1.5">Logo</p>

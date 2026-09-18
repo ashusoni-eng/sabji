@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { adminListProducts, setProductActive, deleteProduct } from '../../services/admin'
 import { imageSrc } from '../../services/catalog'
 import { useAsync } from '../../hooks/useAsync'
-import { useToast } from '../../context/contexts'
+import { useToast, useStore } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
 import { Button, Skeleton, EmptyState, ErrorState, Icon, Input, ProductImage } from '../../components/ui'
 import { rupees } from '../../lib/format'
@@ -11,8 +11,9 @@ import { rupees } from '../../lib/format'
 export default function AdminProducts() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { tenantId } = useStore()
   const [q, setQ] = useState('')
-  const { data, loading, error, reload } = useAsync(() => adminListProducts(), [])
+  const { data, loading, error, reload } = useAsync(() => (tenantId ? adminListProducts(tenantId) : []), [tenantId])
 
   const rows = (data || []).filter((p) => p.name.toLowerCase().includes(q.toLowerCase()))
 

@@ -2,7 +2,7 @@ import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { isConfigured } from './lib/supabase'
 import { AuthProvider } from './context/AuthContext'
-import { useAuth } from './context/contexts'
+import { useAuth, useStore } from './context/contexts'
 import { CartProvider } from './context/CartContext'
 import { StoreProvider } from './context/StoreContext'
 import { ToastProvider } from './context/ToastContext'
@@ -39,9 +39,19 @@ const AdminStaff       = lazy(() => import('./screens/admin/AdminStaff'))
 
 const MyDeliveries     = lazy(() => import('./screens/delivery/MyDeliveries'))
 const DeliveryDetail   = lazy(() => import('./screens/delivery/DeliveryDetail'))
+const ShopPicker       = lazy(() => import('./screens/ShopPicker'))
+const SuperAdmin       = lazy(() => import('./screens/super/SuperAdmin'))
 
 function Loading() {
   return <div className="min-h-dvh grid place-items-center text-brand"><Spinner size={28} /></div>
+}
+
+/** With several shops on the platform, a device must pick one before browsing. */
+function ShopGate({ children }) {
+  const { loading, tenant, needsPick } = useStore()
+  if (loading) return <Loading />
+  if (!tenant && needsPick) return <Navigate to="/shops" replace />
+  return children
 }
 
 /** Sends signed-out customers to login, then back to where they were going. */
@@ -62,7 +72,10 @@ export default function App() {
         <UpdatePrompt />
         <Suspense fallback={<Loading />}>
           <Routes>
-            <Route path="/"                  element={<Shop />} />
+            <Route path="/"                  element={<ShopGate><Shop /></ShopGate>} />
+            <Route path="/s/:shopId"         element={<ShopPicker />} />
+            <Route path="/shops"             element={<ShopPicker />} />
+            <Route path="/super"             element={<SuperAdmin />} />
             <Route path="/categories"        element={<Categories />} />
             <Route path="/category/:slug"    element={<CategoryProducts />} />
             <Route path="/product/:id"       element={<ProductDetail />} />

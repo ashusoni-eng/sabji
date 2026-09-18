@@ -1,21 +1,22 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useCart } from '../../context/contexts'
 import { useAuth, useStore } from '../../context/contexts'
-import { STORE_NAME } from '../../lib/store'
+import { PLATFORM_NAME } from '../../lib/store'
 import { Icon, IconButton } from '../ui'
 
 /** The shop's uploaded logo if there is one, otherwise its name set in type. */
 export function StoreMark() {
-  const { logoUrl } = useStore()
+  const { logoUrl, shopName } = useStore()
+  const name = shopName || PLATFORM_NAME
   if (logoUrl) {
     return (
-      <img src={logoUrl} alt={STORE_NAME} width="140" height="36"
+      <img src={logoUrl} alt={name} width="140" height="36"
            className="h-8 w-auto max-w-[190px] object-contain pl-2" />
     )
   }
   return (
     <span className="font-headline font-black text-xl text-brand tracking-tight pl-2 truncate">
-      {STORE_NAME}
+      {name}
     </span>
   )
 }

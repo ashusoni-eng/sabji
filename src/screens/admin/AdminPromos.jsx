@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { listPromos, savePromo, setPromoActive, deletePromo } from '../../services/promos'
 import { useAsync } from '../../hooks/useAsync'
-import { useToast } from '../../context/contexts'
+import { useToast, useStore } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
 import {
   Button, Field, Input, Select, Sheet, Skeleton, EmptyState, ErrorState, Icon,
@@ -15,7 +15,8 @@ const BLANK = {
 
 export default function AdminPromos() {
   const toast = useToast()
-  const { data, loading, error, reload } = useAsync(() => listPromos(), [])
+  const { tenantId } = useStore()
+  const { data, loading, error, reload } = useAsync(() => (tenantId ? listPromos(tenantId) : []), [tenantId])
   const [sheet, setSheet] = useState({ open: false, promo: null })
   const [form, setForm] = useState(BLANK)
   const [saving, setSaving] = useState(false)
@@ -57,7 +58,7 @@ export default function AdminPromos() {
         ...form,
         valid_from: form.valid_from ? new Date(form.valid_from).toISOString() : null,
         valid_to: form.valid_to ? new Date(form.valid_to + 'T23:59:59').toISOString() : null,
-      })
+      }, tenantId)
       toast.ok(sheet.promo ? 'Code updated' : 'Code created')
       setSheet({ open: false, promo: null })
       reload()

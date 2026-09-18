@@ -19,10 +19,10 @@ export default function Checkout() {
   const { lines, subtotalPaise, clear, revalidate } = useCart()
   const { user } = useAuth()
   const toast = useToast()
-  const { settings: shop, paymentQrUrl, onlinePaymentReady } = useStore()
+  const { settings: shop, paymentQrUrl, onlinePaymentReady, tenantId } = useStore()
 
   const addresses = useAsync(() => listAddresses(), [])
-  const settings = useAsync(() => getSettings(), [])
+  const settings = useAsync(() => (tenantId ? getSettings(tenantId) : null), [tenantId])
 
   // Both of these are "the customer's pick, else the sensible default". Derived
   // during render rather than pushed into state by an effect.
@@ -74,7 +74,7 @@ export default function Checkout() {
     setCheckingPromo(true)
     setPromoError('')
     try {
-      const result = await previewPromo(code, subtotalPaise)
+      const result = await previewPromo(code, subtotalPaise, tenantId)
       if (!result.ok) {
         setPromo(null)
         setPromoError(result.reason)
@@ -119,6 +119,7 @@ export default function Checkout() {
         paymentMethod: payMethod,
         paidAmountPaise: payMethod === 'online' ? (toPaise(paidAmount) ?? total) : null,
         paidReference: payMethod === 'online' ? paidRef : null,
+        tenantId,
       })
       placed.current = true
       clear()

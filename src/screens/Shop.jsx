@@ -3,7 +3,7 @@ import { listProducts, listCategories, PAGE_SIZE } from '../services/catalog'
 import { useAsync, useDebounced } from '../hooks/useAsync'
 import { useStore } from '../context/contexts'
 import { readableError } from '../lib/supabase'
-import { STORE_NAME } from '../lib/store'
+
 import { Screen, CartButton } from '../components/layout/AppShell'
 import { ProductGrid } from '../components/product/ProductCard'
 import { Icon, Input, ProductGridSkeleton, EmptyState, ErrorState, Button, Spinner } from '../components/ui'
@@ -13,8 +13,8 @@ export default function Shop() {
   const [rawSearch, setRawSearch] = useState('')
   const search = useDebounced(rawSearch, 300)
 
-  const { settings, bannerUrl } = useStore()
-  const cats = useAsync(() => listCategories(), [])
+  const { settings, bannerUrl, shopName, tenantId } = useStore()
+  const cats = useAsync(() => (tenantId ? listCategories(tenantId) : []), [tenantId])
 
   // Paged catalogue. Page 0 replaces, later pages append.
   const [items, setItems] = useState([])
@@ -29,8 +29,9 @@ export default function Shop() {
     replace ? setLoading(true) : setLoadingMore(true)
     setError(null)
     try {
+      if (!tenantId) { setItems([]); setHasMore(false); return }
       const { rows, hasMore: more } = await listProducts({
-        categorySlug: cat, search, page: nextPage,
+        tenantId, categorySlug: cat, search, page: nextPage,
       })
       setItems((prev) => (replace ? rows : [...prev, ...rows]))
       setHasMore(more)
@@ -40,7 +41,7 @@ export default function Shop() {
     } finally {
       replace ? setLoading(false) : setLoadingMore(false)
     }
-  }, [cat, search])
+  }, [cat, search, tenantId])
 
   // Filter or search changed — start again from the first page.
   useEffect(() => { fetchPage(0, true) }, [fetchPage])
@@ -72,7 +73,7 @@ export default function Shop() {
       {/* Banner image if the shop uploaded one, else their own message, else
           nothing at all — the customer lands straight on search. */}
       {bannerUrl ? (
-        <img src={bannerUrl} alt={bannerText || `${STORE_NAME} offers`}
+        <img src={bannerUrl} alt={bannerText || `${shopName} offers`}
              width="800" height="360" loading="eager"
              className="w-full rounded-xl mb-5 object-cover aspect-[20/9] bg-surface-2" />
       ) : bannerText ? (
@@ -80,7 +81,7 @@ export default function Shop() {
           <div className="flex items-center gap-2 mb-1.5">
             <Icon name="eco" fill className="text-golden text-[19px]" />
             <span className="text-[11px] font-bold uppercase tracking-wider text-on-brand/75">
-              {STORE_NAME}
+              {shopName}
             </span>
           </div>
           <p className="text-lg font-extrabold font-headline leading-snug">{bannerText}</p>

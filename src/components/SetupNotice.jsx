@@ -1,5 +1,5 @@
 import { Icon } from './ui'
-import { STORE_NAME } from '../lib/store'
+import { PLATFORM_NAME } from '../lib/store'
 
 /**
  * Shown instead of the app when VITE_SUPABASE_* are still placeholders, so the
@@ -8,7 +8,7 @@ import { STORE_NAME } from '../lib/store'
 export default function SetupNotice() {
   return (
     <main className="min-h-dvh flex flex-col justify-center px-6 py-12 max-w-md mx-auto">
-      <span className="font-headline font-black text-3xl text-brand tracking-tight mb-6">{STORE_NAME}</span>
+      <span className="font-headline font-black text-3xl text-brand tracking-tight mb-6">{PLATFORM_NAME}</span>
       <div className="flex items-center gap-2 mb-3">
         <Icon name="settings" className="text-accent" />
         <h1 className="font-headline font-extrabold text-xl">One setup step left</h1>

@@ -5,7 +5,8 @@ import { useToast } from '../context/contexts'
 import { readableError } from '../lib/supabase'
 import { Button, Field, Input, Icon } from '../components/ui'
 import { displayPhone } from '../lib/format'
-import { STORE_NAME } from '../lib/store'
+import { PLATFORM_NAME } from '../lib/store'
+import { useStore } from '../context/contexts'
 
 export default function Login() {
   const navigate = useNavigate()
@@ -13,6 +14,7 @@ export default function Login() {
   const next = params.get('next') || '/'
   const { sendOtp, verifyOtp, user, updateProfile } = useAuth()
   const toast = useToast()
+  const { shopName } = useStore()
 
   const [step, setStep] = useState('phone')
   const [phone, setPhone] = useState('')
@@ -83,7 +85,7 @@ export default function Login() {
         </button>
       )}
 
-      <span className="font-headline font-black text-3xl text-brand tracking-tight mb-2">{STORE_NAME}</span>
+      <span className="font-headline font-black text-3xl text-brand tracking-tight mb-2">{shopName || PLATFORM_NAME}</span>
 
       {step === 'name' ? (
         <>

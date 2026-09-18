@@ -5,9 +5,9 @@ import { supabase } from '../lib/supabase'
  * the same rules inside place_order(), so this is a preview, never the
  * authority — a customer cannot get a discount by lying to this call.
  */
-export async function previewPromo(code, subtotalPaise) {
+export async function previewPromo(code, subtotalPaise, tenantId) {
   const { data, error } = await supabase.rpc('preview_promo', {
-    p_code: code, p_subtotal: subtotalPaise,
+    p_code: code, p_subtotal: subtotalPaise, p_tenant: tenantId,
   })
   if (error) throw error
   const row = Array.isArray(data) ? data[0] : data
@@ -17,9 +17,9 @@ export async function previewPromo(code, subtotalPaise) {
 }
 
 // ---------------------------------------------------------------- admin
-export async function listPromos() {
+export async function listPromos(tenantId) {
   const { data, error } = await supabase
-    .from('promo_codes').select('*').order('created_at', { ascending: false })
+    .from('promo_codes').select('*').eq('tenant_id', tenantId).order('created_at', { ascending: false })
   if (error) throw error
 
   // Redemption counts, so the shop can see what is actually being used.
@@ -28,8 +28,9 @@ export async function listPromos() {
   return (data || []).map((p) => ({ ...p, redemptions: counts[p.id] || 0 }))
 }
 
-export async function savePromo(promo) {
+export async function savePromo(promo, tenantId) {
   const row = {
+    tenant_id: tenantId,
     code: promo.code.trim().toUpperCase(),
     kind: promo.kind,
     value: promo.value,

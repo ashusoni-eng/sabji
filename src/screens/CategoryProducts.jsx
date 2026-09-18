@@ -2,13 +2,15 @@ import { useParams } from 'react-router-dom'
 import { listProducts, listCategories } from '../services/catalog'
 import { useAsync } from '../hooks/useAsync'
 import { Screen, CartButton } from '../components/layout/AppShell'
+import { useStore } from '../context/contexts'
 import { ProductGrid } from '../components/product/ProductCard'
 import { ProductGridSkeleton, EmptyState, ErrorState } from '../components/ui'
 
 export default function CategoryProducts() {
   const { slug } = useParams()
-  const cats = useAsync(() => listCategories(), [])
-  const products = useAsync(async () => (await listProducts({ categorySlug: slug, pageSize: 100 })).rows, [slug])
+  const { tenantId } = useStore()
+  const cats = useAsync(() => (tenantId ? listCategories(tenantId) : []), [tenantId])
+  const products = useAsync(async () => (tenantId ? (await listProducts({ tenantId, categorySlug: slug, pageSize: 100 })).rows : []), [slug, tenantId])
   const name = cats.data?.find((c) => c.slug === slug)?.name || 'Category'
 
   return (

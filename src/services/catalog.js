@@ -26,10 +26,10 @@ export function leadVariant(product) {
   return vs.find((v) => v.in_stock) || vs[0] || null
 }
 
-export async function listCategories() {
+export async function listCategories(tenantId) {
   const { data, error } = await supabase
     .from('categories').select('id, name, slug, sort_order')
-    .eq('is_active', true).order('sort_order')
+    .eq('tenant_id', tenantId).eq('is_active', true).order('sort_order')
   if (error) throw error
   return data
 }
@@ -41,12 +41,12 @@ export const PAGE_SIZE = 20
  * items and painful for five hundred, so the shop screen pulls 20 at a time and
  * fetches the next page as the customer scrolls.
  */
-export async function listProducts({ categorySlug, search, page = 0, pageSize = PAGE_SIZE } = {}) {
-  let q = supabase.from('products').select(PRODUCT_SELECT).eq('is_active', true)
+export async function listProducts({ tenantId, categorySlug, search, page = 0, pageSize = PAGE_SIZE } = {}) {
+  let q = supabase.from('products').select(PRODUCT_SELECT).eq('tenant_id', tenantId).eq('is_active', true)
   if (search?.trim()) q = q.ilike('name', `%${search.trim()}%`)
   if (categorySlug && categorySlug !== 'all') {
     const { data: cat } = await supabase
-      .from('categories').select('id').eq('slug', categorySlug).maybeSingle()
+      .from('categories').select('id').eq('tenant_id', tenantId).eq('slug', categorySlug).maybeSingle()
     if (!cat) return { rows: [], hasMore: false }
     q = q.eq('category_id', cat.id)
   }
@@ -76,8 +76,8 @@ export async function revalidateVariants(variantIds) {
   return Object.fromEntries((data || []).map((v) => [v.id, v]))
 }
 
-export async function getSettings() {
-  const { data, error } = await supabase.from('settings').select('*').eq('id', 1).single()
+export async function getSettings(tenantId) {
+  const { data, error } = await supabase.from('settings').select('*').eq('tenant_id', tenantId).single()
   if (error) throw error
   return data
 }

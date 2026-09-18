@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { adminListCategories, saveCategory, deleteCategory } from '../../services/admin'
 import { useAsync } from '../../hooks/useAsync'
-import { useToast } from '../../context/contexts'
+import { useToast, useStore } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
 import { Button, Field, Input, Sheet, Skeleton, EmptyState, ErrorState, Icon } from '../../components/ui'
 
 export default function AdminCategories() {
   const toast = useToast()
-  const { data, loading, error, reload } = useAsync(() => adminListCategories(), [])
+  const { tenantId } = useStore()
+  const { data, loading, error, reload } = useAsync(() => (tenantId ? adminListCategories(tenantId) : []), [tenantId])
   const [sheet, setSheet] = useState({ open: false, cat: null })
   const [form, setForm] = useState({ name: '', sort_order: 0, is_active: true })
   const [saving, setSaving] = useState(false)
@@ -21,7 +22,7 @@ export default function AdminCategories() {
     if (!form.name.trim()) return toast.error('Give the category a name.')
     setSaving(true)
     try {
-      await saveCategory({ ...form, id: sheet.cat?.id })
+      await saveCategory({ ...form, id: sheet.cat?.id }, tenantId)
       toast.ok(sheet.cat ? 'Category updated' : 'Category added')
       setSheet({ open: false, cat: null })
       reload()

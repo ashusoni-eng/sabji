@@ -2,12 +2,14 @@ import { useNavigate } from 'react-router-dom'
 import { listCategories, listProducts, imageSrc } from '../services/catalog'
 import { useAsync } from '../hooks/useAsync'
 import { Screen, CartButton } from '../components/layout/AppShell'
+import { useStore } from '../context/contexts'
 import { Skeleton, EmptyState, ErrorState, Icon, ProductImage } from '../components/ui'
 
 export default function Categories() {
   const navigate = useNavigate()
-  const cats = useAsync(() => listCategories(), [])
-  const products = useAsync(async () => (await listProducts({ pageSize: 200 })).rows, [])
+  const { tenantId } = useStore()
+  const cats = useAsync(() => (tenantId ? listCategories(tenantId) : []), [tenantId])
+  const products = useAsync(async () => (tenantId ? (await listProducts({ tenantId, pageSize: 200 })).rows : []), [tenantId])
 
   const countFor = (slug) => (products.data || []).filter((p) => p.category?.slug === slug).length
   const coverFor = (slug) => {

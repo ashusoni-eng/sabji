@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminOrders, subscribeToOrders, dailySummary } from '../../services/orders'
 import { useAsync } from '../../hooks/useAsync'
-import { useToast } from '../../context/contexts'
-import { Skeleton, EmptyState, ErrorState, StatusPill, PaymentBadge, Icon } from '../../components/ui'
+import { useToast, useStore } from '../../context/contexts'
+import { Skeleton, EmptyState, ErrorState, StatusPill, PaymentBadge, ChannelBadge, Icon } from '../../components/ui'
 import { rupees, formatDate, STATUS_LABEL } from '../../lib/format'
 
 const FILTERS = [
@@ -15,8 +15,9 @@ const FILTERS = [
 export default function AdminOrders() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { tenantId } = useStore()
   const [filter, setFilter] = useState('placed')
-  const orders = useAsync(() => adminOrders({ status: filter }), [filter])
+  const orders = useAsync(() => (tenantId ? adminOrders({ status: filter, tenantId }) : []), [filter, tenantId])
   const summary = useAsync(() => dailySummary(1), [])
   const seen = useRef(new Set())
 
@@ -25,6 +26,7 @@ export default function AdminOrders() {
    * so a new order announces itself the moment it lands.
    */
   useEffect(() => {
+    if (!tenantId) return
     const unsub = subscribeToOrders((payload) => {
       if (payload.eventType === 'INSERT' && !seen.current.has(payload.new.id)) {
         seen.current.add(payload.new.id)
@@ -33,10 +35,10 @@ export default function AdminOrders() {
       }
       orders.reload()
       summary.reload()
-    })
+    }, tenantId)
     return unsub
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter])
+  }, [filter, tenantId])
 
   const today = summary.data?.[0]
 
@@ -88,6 +90,7 @@ export default function AdminOrders() {
                 <div className="flex flex-col items-end gap-1">
                   <StatusPill status={o.status} label={STATUS_LABEL[o.status]} />
                   <PaymentBadge method={o.payment_method} status={o.payment_status} compact />
+                  <ChannelBadge channel={o.channel} />
                 </div>
               </div>
               <p className="text-sm font-semibold">{o.ship_full_name} · {o.ship_phone}</p>

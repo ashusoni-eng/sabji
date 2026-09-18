@@ -6,7 +6,7 @@ import {
 } from '../../services/admin'
 import { imageSrc } from '../../services/catalog'
 import { useAsync } from '../../hooks/useAsync'
-import { useToast } from '../../context/contexts'
+import { useToast, useStore } from '../../context/contexts'
 import { readableError } from '../../lib/supabase'
 import { compressProductImage, readableSize } from '../../lib/image'
 import {
@@ -22,8 +22,9 @@ export default function AdminProductEdit() {
   const navigate = useNavigate()
   const toast = useToast()
   const fileRef = useRef(null)
+  const { tenantId } = useStore()
 
-  const cats = useAsync(() => adminListCategories(), [])
+  const cats = useAsync(() => (tenantId ? adminListCategories(tenantId) : []), [tenantId])
   const existing = useAsync(() => (isNew ? null : adminGetProduct(id)), [id], { immediate: !isNew })
 
   const [form, setForm] = useState({
@@ -92,7 +93,7 @@ export default function AdminProductEdit() {
     if (!validate()) return toast.error('Check the highlighted fields.')
     setSaving(true)
     try {
-      await saveProduct({ ...form, id: isNew ? undefined : id }, variants)
+      await saveProduct({ ...form, id: isNew ? undefined : id }, variants, tenantId)
       toast.ok(isNew ? 'Item added' : 'Item updated')
       navigate('/admin/products')
     } catch (e) { toast.error(readableError(e)) }

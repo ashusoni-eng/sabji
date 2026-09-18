@@ -254,6 +254,16 @@ export function PaymentBadge({ method, status, compact = false }) {
   )
 }
 
+export function ChannelBadge({ channel }) {
+  if (channel !== 'whatsapp') return null
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                     tracking-wide bg-[#25D366]/15 text-[#128C7E] dark:text-[#25D366]">
+      <Icon name="chat" className="text-[12px]" /> WhatsApp
+    </span>
+  )
+}
+
 /** Product image with dimensions and lazy loading, so the grid does not shift. */
 export function ProductImage({ src, alt, className = '' }) {
   return src ? (

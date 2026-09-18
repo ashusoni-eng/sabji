@@ -6,8 +6,9 @@ const ADMIN_PRODUCT_SELECT = `
   variants:product_variants ( id, label, unit, price_paise, mrp_paise, in_stock, sort_order )
 `
 
-export async function adminListProducts() {
-  const { data, error } = await supabase.from('products').select(ADMIN_PRODUCT_SELECT).order('sort_order')
+export async function adminListProducts(tenantId) {
+  const { data, error } = await supabase.from('products').select(ADMIN_PRODUCT_SELECT)
+    .eq('tenant_id', tenantId).order('sort_order')
   if (error) throw error
   return (data || []).map((p) => ({
     ...p, variants: [...(p.variants || [])].sort((a, b) => a.sort_order - b.sort_order),
@@ -24,8 +25,9 @@ export async function adminGetProduct(id) {
  * Saves a product and reconciles its variants in one go: updates the ones that
  * still exist, inserts new ones, deletes the ones the admin removed.
  */
-export async function saveProduct(product, variants) {
+export async function saveProduct(product, variants, tenantId) {
   const row = {
+    tenant_id: tenantId,
     name: product.name.trim(),
     description: product.description || '',
     badge: product.badge?.trim() || null,
@@ -100,14 +102,16 @@ export async function deleteProductImage(path) {
 }
 
 // ---------------------------------------------------------------- categories
-export async function adminListCategories() {
-  const { data, error } = await supabase.from('categories').select('*').order('sort_order')
+export async function adminListCategories(tenantId) {
+  const { data, error } = await supabase.from('categories').select('*')
+    .eq('tenant_id', tenantId).order('sort_order')
   if (error) throw error
   return data
 }
 
-export async function saveCategory(cat) {
+export async function saveCategory(cat, tenantId) {
   const row = {
+    tenant_id: tenantId,
     name: cat.name.trim(),
     slug: cat.slug?.trim() || cat.name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     sort_order: cat.sort_order ?? 0,
@@ -125,8 +129,8 @@ export async function deleteCategory(id) {
   if (error) throw error
 }
 
-export async function saveSettings(patch) {
-  const { error } = await supabase.from('settings').update(patch).eq('id', 1)
+export async function saveSettings(patch, tenantId) {
+  const { error } = await supabase.from('settings').update(patch).eq('tenant_id', tenantId)
   if (error) throw error
 }
 
