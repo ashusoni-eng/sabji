@@ -54,17 +54,57 @@ service-role path so the bot can order on a customer's behalf.
 
 ### 2. Secrets
 
+`supabase/.secrets.local.sh` (gitignored) holds the ready-to-run command with
+this project's values already filled in. Run it once the two placeholders are
+replaced:
+
 ```bash
-supabase secrets set \
-  WHATSAPP_ACCESS_TOKEN=EAAG...        # permanent system-user token, not the 24h one
-  WHATSAPP_PHONE_NUMBER_ID=1234567890  # the number's ID from Meta, not the number itself
-  WHATSAPP_VERIFY_TOKEN=any-string-you-choose
-  GEMINI_API_KEY=AIza...
+bash supabase/.secrets.local.sh
 ```
+
+| Secret | This project |
+|---|---|
+| `WHATSAPP_PHONE_NUMBER_ID` | `989707754228556` |
+| `WHATSAPP_WABA_ID` | `936090002100629` |
+| `WHATSAPP_VERIFY_TOKEN` | generated, in the script |
+| `WHATSAPP_ACCESS_TOKEN` | **needs a permanent token — see below** |
+| `GEMINI_API_KEY` | **still needed** |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.
 
 These are real secrets. None of them go anywhere near a `VITE_` variable.
+
+#### The access token must be permanent
+
+The token from the Meta dashboard's *Temporary access token* box lasts **24
+hours**. A bot on one of those stops replying the next day, with no obvious
+error beyond `190` in the logs.
+
+Make a permanent one: **business.facebook.com → Business settings → Users →
+System users** → add a system user with the Admin role → *Generate new token*
+→ pick the app, tick `whatsapp_business_messaging` and
+`whatsapp_business_management` → set expiry to **Never**.
+
+Check any token before trusting it:
+
+```bash
+curl -s "https://graph.facebook.com/v19.0/debug_token?input_token=$TOK&access_token=$TOK" \
+  | python3 -c "import json,sys,datetime; d=json.load(sys.stdin)['data']; \
+    print('expires:', 'never' if d['expires_at']==0 else datetime.datetime.fromtimestamp(d['expires_at']))"
+```
+
+#### The number is a Meta test number
+
+`+1 555 159 3204` is Meta's free sandbox number. Useful for building, but:
+
+- it can only message **up to 5 recipient numbers you add** in the dashboard,
+  so a customer scanning a QR cannot reach it unless they are on that list;
+- it cannot be the number on a printed QR for real customers;
+- it is US-based, which looks odd to an Indian customer.
+
+For real use, add your own business number under **WhatsApp → API Setup → Add
+phone number** and verify it. Everything else here stays the same — only
+`WHATSAPP_PHONE_NUMBER_ID` changes.
 
 ### 3. Deploy
 
