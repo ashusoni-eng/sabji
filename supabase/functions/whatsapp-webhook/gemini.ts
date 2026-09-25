@@ -9,29 +9,46 @@
  */
 import type { CatalogueItem, MatchResult, ParsedAddress } from './types.ts'
 
-const MODEL = 'gemini-2.0-flash'
+// Overridable, because which models a key can reach changes over time —
+// gemini-2.0-flash was already gone when this was wired up. `models?key=...`
+// lists what a given key can actually call.
+const MODEL = Deno.env.get('GEMINI_MODEL') || 'gemini-2.5-flash'
 
 type Part = { text: string } | { inlineData: { mimeType: string; data: string } }
 
-async function generate(apiKey: string, parts: Part[], schema: object, fetchFn: typeof fetch = fetch): Promise<unknown> {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+/**
+ * 503 ("high demand") and 429 (rate limit) both happen in normal use — the
+ * free tier's per-minute limit is easy to hit when several customers order at
+ * once. Retrying with a short backoff turns a failed order into a slightly
+ * slower one. Anything else fails immediately: a 400 is a bad prompt and a 403
+ * is a bad key, and neither improves by asking again.
+ */
+async function generate(
+  apiKey: string, parts: Part[], schema: object,
+  fetchFn: typeof fetch = fetch, attempts = 3,
+): Promise<unknown> {
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`
-  const res = await fetchFn(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ role: 'user', parts }],
-      generationConfig: {
-        temperature: 0.1,
-        responseMimeType: 'application/json',
-        responseSchema: schema,
-      },
-    }),
+  const body = JSON.stringify({
+    contents: [{ role: 'user', parts }],
+    generationConfig: { temperature: 0.1, responseMimeType: 'application/json', responseSchema: schema },
   })
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`)
-  const json = await res.json()
-  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error('Gemini returned no content')
-  return JSON.parse(text)
+
+  let lastError = ''
+  for (let i = 0; i < attempts; i++) {
+    if (i > 0) await sleep(700 * 2 ** (i - 1))      // 0.7s, then 1.4s
+    const res = await fetchFn(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body })
+    if (res.ok) {
+      const json = await res.json()
+      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text
+      if (!text) throw new Error('Gemini returned no content')
+      return JSON.parse(text)
+    }
+    lastError = `Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`
+    if (res.status !== 503 && res.status !== 429) throw new Error(lastError)
+  }
+  throw new Error(lastError)
 }
 
 const MATCH_SCHEMA = {

@@ -68,7 +68,8 @@ bash supabase/.secrets.local.sh
 | `WHATSAPP_WABA_ID` | `936090002100629` |
 | `WHATSAPP_VERIFY_TOKEN` | generated, in the script |
 | `WHATSAPP_ACCESS_TOKEN` | **needs a permanent token — see below** |
-| `GEMINI_API_KEY` | **still needed** |
+| `GEMINI_API_KEY` | set, verified live |
+| `GEMINI_MODEL` | `gemini-2.5-flash` |
 
 `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected automatically.
 
@@ -148,8 +149,24 @@ something the customer just sent, so this never bites — but it means the bot
 cannot, for example, message a customer the next day to say their order is out
 for delivery. That would need an approved template.
 
-**Voice notes cost a Gemini call with audio.** Cheap on `gemini-2.0-flash`, but
-not free. A typed order is text-only.
+**Pick a model the key can actually reach.** `gemini-2.0-flash` was already
+retired for this key when the bot was wired up — the call 404s and every order
+fails. `GEMINI_MODEL` overrides the default without a code change. To see what
+a key can call:
+
+```bash
+curl -s "https://generativelanguage.googleapis.com/v1beta/models?key=$KEY" \
+  | python3 -c "import json,sys; [print(m['name'].split('/')[-1]) for m in json.load(sys.stdin)['models']]"
+```
+
+**The free tier's rate limit is low.** Testing six orders back to back hit a
+`503` then a string of `429`s. The client retries 503 and 429 twice with a short
+backoff, which absorbs the occasional spike — but a shop taking several orders a
+minute needs a paid key. Anything else (400 for a bad prompt, 403 for a bad key)
+fails immediately, because retrying will not help.
+
+**Voice notes cost a Gemini call with audio.** Cheap on flash, but not free. A
+typed order is text-only.
 
 **Quantities are units of the catalogue row.** "2 kg aloo" against a "1 kg" row
 is qty 2; "1 dozen kela" against a "12 pc" row is qty 1; "500 g" of a 1 kg row
@@ -165,7 +182,37 @@ they get a separate anonymous user, but everything keys off the phone anyway.
 answers 200 immediately and works afterwards; `wa_messages` records every
 `wamid`, so a retry is recognised and ignored.
 
-**What is not verified.** The conversation is tested end to end under Node with
-fakes. The Gemini prompts and the Meta calls are written against their current
-APIs but have not been exercised against the live services from this machine —
-the first real message through the deployed function is that test.
+## What has been verified live
+
+Against the real APIs, not mocks:
+
+| | |
+|---|---|
+| Meta: text send | delivered to a handset |
+| Meta: 3-button review card, via `graph.ts` | delivered |
+| Meta: address list picker, via `graph.ts` | delivered |
+| Full pipeline: Meta envelope → `parseWebhook` → bot → real reply | delivered |
+| Gemini: item matching | see below |
+| Gemini: address parsing | see below |
+
+Item matching, real replies from `gemini-2.5-flash`:
+
+| Customer said | Matched |
+|---|---|
+| `2 kg aloo, 1 kg tamatar, 1 dozen kela` | 2× Aalu [1 kg], 1× Tamatar (Hybrid), 1× Kela [12 pc] |
+| `ek bora aloo aur do kilo pyaz bhej do` | 1× Aalu (**Bora**) [5 kg], 2× Peyaj [1 kg] |
+| `Desi tamatar 2 packet, bhindi aadha kilo, aur thoda dhaniya` | 2× Tamatar (**Desi**) [2 kg], 1× Bhindi · unmatched: *dhaniya* |
+| `500 gram bhindi` | 1× Bhindi [1 kg] (rounds up) |
+| `namaste bhaiya, kaise ho?` | nothing — greetings are ignored |
+
+Address parsing:
+
+| Customer said | Parsed |
+|---|---|
+| `B-402 Green Residency, Sector 12 Dwarka, near Shiv Mandir, New Delhi 110075` | every field, confident |
+| `mera ghar hai 12 number, main bazaar ke paas, indore, pin code 452001` | house 12, landmark *main bazaar*, city *indore*, pin 452001, confident |
+| `just deliver near the temple` | landmark only, **not** confident — the bot re-asks |
+
+**Still unverified:** the deployed function itself. The handshake, Meta's
+retries and `EdgeRuntime.waitUntil` have not run on Supabase's runtime — the
+first real message through the deployed endpoint is that test.
